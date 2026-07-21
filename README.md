@@ -10,11 +10,14 @@ The repository name is intentionally neutral while the final public game title i
 
 - Five cosmetic cat choices with identical gameplay physics
 - Cat-matched ball, paw-flipper, and tail-launcher artwork
-- Hold-and-release launcher with charge-dependent velocity
+- Hold-and-release launcher with a minimum charge threshold and nonlinear launch strength
 - Responsive paw flippers and a genuine centre drain
-- Moving laser-pointer target and Hunt Meter
+- Moving laser-pointer target that starts Laser Chase on the first hit
+- Timed Mouse Hunt with a harmless sensor target that patrols the table
 - Knockable vase sequence
 - Three-hit cardboard-box lock leading to Zoomies Multiball
+- Moving Roomba Rumble boss that sweeps the lower table and accelerates as it takes hits
+- Roomba Rumble unlocks after finishing Laser Chase and surviving the full Zoomies timer in one run, then returning to one ball
 - Three lives, ball save, combos, scoring, pause, restart, and local high score
 - Keyboard controls and touch controls on mobile layouts
 
@@ -35,8 +38,8 @@ npm run preview
 
 ## Controls
 
-- Left paw: `A` or Left Arrow
-- Right paw: `D` or Right Arrow
+- Left paw: `A`
+- Right paw: `D`
 - Wind and launch: hold `Space`, then release
 - Pause: `P`
 - Restart: `R`

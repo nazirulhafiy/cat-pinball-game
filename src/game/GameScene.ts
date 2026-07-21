@@ -9,6 +9,7 @@ import {
   LEFT_ACTIVE_ANGLE,
   LEFT_PIVOT,
   LEFT_REST_ANGLE,
+  MIN_LAUNCH_CHARGE,
   RIGHT_ACTIVE_ANGLE,
   RIGHT_PIVOT,
   RIGHT_REST_ANGLE,
@@ -42,6 +43,29 @@ const LAUNCH_BALL_X = 875;
 const TAIL_BASE_X = 930;
 const TAIL_BASE_Y = 1540;
 const LASER_ORIGIN: Point = { x: 138, y: 298 };
+const MOUSE_PATH: Point[] = [
+  { x: 735, y: 1010 },
+  { x: 620, y: 1160 },
+  { x: 390, y: 1180 },
+  { x: 170, y: 1080 },
+  { x: 125, y: 790 },
+  { x: 165, y: 540 },
+  { x: 500, y: 505 },
+  { x: 755, y: 535 },
+  { x: 775, y: 790 },
+];
+const MOUSE_SEGMENT_MS = 1100;
+const ROOMBA_PATH: Point[] = [
+  { x: 500, y: 1065 },
+  { x: 680, y: 985 },
+  { x: 735, y: 1095 },
+  { x: 625, y: 1170 },
+  { x: 390, y: 1180 },
+  { x: 260, y: 1090 },
+  { x: 320, y: 985 },
+];
+const ROOMBA_BASE_SEGMENT_MS = 1200;
+const ROOMBA_MIN_SEGMENT_MS = 780;
 
 function labelMatterBody(gameObject: Phaser.Physics.Matter.Image, label: string): void {
   const body = gameObject.body as MatterJS.BodyType | null;
@@ -89,6 +113,15 @@ export class GameScene extends Phaser.Scene {
   private boxLockText!: Phaser.GameObjects.Text;
   private boxLockHint!: Phaser.GameObjects.Text;
   private boxLockLamps: Phaser.GameObjects.Arc[] = [];
+  private mouseTarget!: Phaser.Physics.Matter.Image;
+  private mousePathGuide!: Phaser.GameObjects.Graphics;
+  private mouseMotionMs = 0;
+  private roombaTarget!: Phaser.Physics.Matter.Image;
+  private roombaHalo!: Phaser.GameObjects.Arc;
+  private roombaRouteGuide!: Phaser.GameObjects.Graphics;
+  private roombaLamps: Phaser.GameObjects.Arc[] = [];
+  private roombaLabel!: Phaser.GameObjects.Text;
+  private roombaRouteProgress = 0;
 
   constructor(options: GameOptions) {
     super({ key: 'game' });
@@ -113,6 +146,8 @@ export class GameScene extends Phaser.Scene {
     this.load.image('vase-scales', '/assets/table/objects/vase-scales-v1.png');
     this.load.image('guide-rail', '/assets/table/objects/guide-rail-v1.png');
     this.load.image('kitchen-ramp', '/assets/table/objects/kitchen-ramp-v1.png');
+    this.load.image('mouse', '/assets/table/objects/mouse-v1.png');
+    this.load.image('robot-vacuum', '/assets/table/objects/robot-vacuum-v1.png');
     this.load.image(`cat-ball-${this.cat.id}`, `/assets/cats/${this.cat.id}/ball-v1.png`);
   }
 
@@ -138,6 +173,9 @@ export class GameScene extends Phaser.Scene {
     this.vases = [];
     this.knockedVases.clear();
     this.boxLockLamps = [];
+    this.mouseMotionMs = 0;
+    this.roombaRouteProgress = 0;
+    this.roombaLamps = [];
     this.createTextures();
     this.drawTable();
     this.createWallsAndGuides();
@@ -161,6 +199,7 @@ export class GameScene extends Phaser.Scene {
     this.updateTrails();
     this.updateLauncher(delta);
     this.updateLaser(delta);
+    this.updateEnemyTargets(delta);
 
     if (this.launchQueued !== null) {
       const charge = this.launchQueued;
@@ -264,6 +303,21 @@ export class GameScene extends Phaser.Scene {
       g.fillStyle(0xa86735).fillRoundedRect(5, 38, 260, 30, 8);
       g.fillStyle(0x586f9f).fillRoundedRect(5, 74, 260, 25, 12);
       g.lineStyle(4, 0x171522).strokeRoundedRect(5, 7, 260, 92, 12);
+    });
+    make('mouse', 160, 103, (g) => {
+      g.fillStyle(0x8f7f70).fillEllipse(92, 58, 82, 48);
+      g.fillStyle(0x9f8d7d).fillCircle(127, 52, 25);
+      g.fillStyle(0xe6a07d).fillCircle(120, 30, 13);
+      g.fillStyle(0x171522).fillCircle(137, 48, 4);
+      g.lineStyle(7, 0xe6a07d).beginPath().moveTo(53, 57).lineTo(28, 37).lineTo(9, 48).strokePath();
+      g.lineStyle(5, 0x171522).strokeEllipse(92, 58, 82, 48).strokeCircle(127, 52, 25);
+    });
+    make('robot-vacuum', 220, 162, (g) => {
+      g.fillStyle(0x20252c).fillEllipse(110, 91, 178, 112);
+      g.fillStyle(0x75716b).fillEllipse(110, 70, 174, 112);
+      g.fillStyle(0x3f4549).fillEllipse(110, 70, 132, 76);
+      g.fillStyle(0xe64f25).fillEllipse(110, 67, 34, 24);
+      g.lineStyle(7, 0x11151a).strokeEllipse(110, 70, 174, 112).strokeEllipse(110, 70, 132, 76);
     });
   }
 
@@ -396,6 +450,27 @@ export class GameScene extends Phaser.Scene {
     this.add.text(890, 180, 'MOUSE\nHOLE', {
       fontFamily: 'system-ui, sans-serif', fontSize: '14px', fontStyle: '800', color: '#f7dc99', align: 'center',
     }).setOrigin(0.5);
+
+    this.mousePathGuide = this.add.graphics().setDepth(5).setVisible(false);
+    this.mouseTarget = this.matter.add.image(MOUSE_PATH[0].x, MOUSE_PATH[0].y, 'mouse', undefined, { isStatic: true, isSensor: true });
+    this.mouseTarget.setDisplaySize(140, 90).setRectangle(96, 48).setStatic(true).setSensor(true).setDepth(6).setVisible(false);
+    labelMatterBody(this.mouseTarget, 'mouse');
+
+    this.roombaRouteGuide = this.add.graphics().setDepth(5).setVisible(false);
+    this.roombaHalo = this.add.circle(ROOMBA_PATH[0].x, ROOMBA_PATH[0].y, 108, 0x63d6d1, 0.08)
+      .setStrokeStyle(6, 0xffcf70, 0.76).setDepth(5).setVisible(false);
+    this.roombaTarget = this.matter.add.image(ROOMBA_PATH[0].x, ROOMBA_PATH[0].y, 'robot-vacuum', undefined, { isStatic: true, isSensor: true });
+    this.roombaTarget.setDisplaySize(220, 162).setCircle(88).setStatic(true).setSensor(true).setDepth(6).setVisible(false);
+    labelMatterBody(this.roombaTarget, 'roomba');
+    this.roombaLamps = Array.from({ length: 6 }, (_, index) => {
+      const angle = Math.PI + (index / 5) * Math.PI;
+      return this.add.circle(ROOMBA_PATH[0].x + Math.cos(angle) * 76, ROOMBA_PATH[0].y + Math.sin(angle) * 53, 7, 0x332d3d, 1)
+        .setStrokeStyle(2, 0xffcf70, 0.8).setDepth(8).setVisible(false);
+    });
+    this.roombaLabel = this.add.text(ROOMBA_PATH[0].x, ROOMBA_PATH[0].y + 98, 'VACUUM 0/6', {
+      fontFamily: 'system-ui, sans-serif', fontSize: '14px', fontStyle: '800', color: '#ffdc8d',
+      backgroundColor: '#101426cc', padding: { x: 9, y: 4 },
+    }).setOrigin(0.5).setDepth(8).setVisible(false);
   }
 
   private createFlippers(): void {
@@ -452,15 +527,15 @@ export class GameScene extends Phaser.Scene {
     const keyHandler = (down: boolean): EventListener => (event) => {
       const keyboardEvent = event as KeyboardEvent;
       const key = keyboardEvent.key.toLowerCase();
-      if (key === 'a' || key === 'arrowleft') this.keyboardLeftDown = down;
-      if (key === 'd' || key === 'arrowright') this.keyboardRightDown = down;
+      if (key === 'a') this.keyboardLeftDown = down;
+      if (key === 'd') this.keyboardRightDown = down;
       const isLaunchKey = keyboardEvent.code === 'Space' || key === ' ' || key === 'spacebar';
       if (down && isLaunchKey && !keyboardEvent.repeat) {
         this.beginLaunchCharge();
         void this.audio.unlock();
       }
       if (!down && isLaunchKey) this.releaseLaunchCharge();
-      if (key === 'a' || key === 'd' || key.startsWith('arrow') || isLaunchKey) keyboardEvent.preventDefault();
+      if (key === 'a' || key === 'd' || isLaunchKey) keyboardEvent.preventDefault();
     };
     const keyDownHandler = keyHandler(true);
     const keyUpHandler = keyHandler(false);
@@ -494,13 +569,22 @@ export class GameScene extends Phaser.Scene {
 
   private releaseLaunchCharge(): void {
     if (!this.launchCharging) return;
-    const charge = Math.max(0.04, this.launchCharge);
+    const charge = this.launchCharge;
     this.launchCharging = false;
     this.launchHeldMs = 0;
     this.launchCharge = 0;
     this.tailRebounding = true;
     this.updateLauncherVisual();
     this.playTailRelease(charge);
+    if (charge < MIN_LAUNCH_CHARGE) {
+      this.launchLabel.setText('MORE POWER NEEDED');
+      this.messageText.setText('TOO SOFT: HOLD LONGER');
+      this.time.delayedCall(850, () => {
+        if (!this.launchCharging && this.launcherBall()) this.launchLabel.setText('HOLD SPACE');
+        if (this.messageText.text === 'TOO SOFT: HOLD LONGER') this.messageText.setText('');
+      });
+      return;
+    }
     this.launchQueued = charge;
   }
 
@@ -540,6 +624,8 @@ export class GameScene extends Phaser.Scene {
     this.launchMeter.clear();
     this.launchMeter.fillStyle(0x15162d, 0.95).fillRoundedRect(840, 1235, 16, 220, 8);
     this.launchMeter.lineStyle(3, 0xffcf70, 0.8).strokeRoundedRect(840, 1235, 16, 220, 8);
+    const thresholdY = 1451 - 212 * MIN_LAUNCH_CHARGE;
+    this.launchMeter.lineStyle(3, 0xffefbd, 0.88).lineBetween(837, thresholdY, 859, thresholdY);
     if (charge > 0) {
       const height = 212 * charge;
       this.launchMeter.fillStyle(charge >= 1 ? 0x62f6a9 : 0xff9d47, 1)
@@ -681,6 +767,28 @@ export class GameScene extends Phaser.Scene {
       ball.setVelocity(8, -12);
       return;
     }
+    if (label === 'mouse' && this.activeMode === 'mouse-hunt') {
+      const snapshot = cueAndDispatch('mouse', { type: 'mouse-hit' });
+      if (!this.options.reducedMotion) {
+        this.tweens.killTweensOf(this.mouseTarget);
+        this.tweens.add({ targets: this.mouseTarget, scaleX: 1.16, scaleY: 0.84, yoyo: true, duration: 110 });
+      }
+      this.mouseMotionMs = (this.mouseMotionMs + MOUSE_SEGMENT_MS) % (MOUSE_PATH.length * MOUSE_SEGMENT_MS);
+      this.renderEnemyTargets(snapshot);
+      return;
+    }
+    if (label === 'roomba' && this.activeMode === 'roomba-rumble') {
+      const cue: SoundCue = this.lastSnapshot.roombaHits + 1 >= this.lastSnapshot.roombaGoal ? 'jackpot' : 'vacuum';
+      const snapshot = cueAndDispatch(cue, { type: 'roomba-hit' });
+      this.roombaRouteProgress = (this.roombaRouteProgress + 0.18) % ROOMBA_PATH.length;
+      if (!this.options.reducedMotion) {
+        this.tweens.killTweensOf(this.roombaTarget);
+        this.tweens.add({ targets: this.roombaTarget, scaleX: 1.05, scaleY: 0.94, yoyo: true, duration: 120 });
+        this.cameras.main.shake(55, 0.002);
+      }
+      this.renderEnemyTargets(snapshot);
+      return;
+    }
     if (label.startsWith('vase-')) {
       const index = Number(label.slice(5));
       if (!this.knockVase(index)) return;
@@ -737,7 +845,7 @@ export class GameScene extends Phaser.Scene {
     this.launched = true;
     this.audio.cue('launch');
     this.launchLabel.setText(`POWER ${Math.round(charge * 100)}%`);
-    this.messageText.setText(charge >= 0.95 ? 'MAXIMUM ZOOM!' : 'GO, KITTY, GO!');
+    this.messageText.setText(charge >= 0.95 ? 'MAXIMUM ZOOM!' : charge >= 0.72 ? 'STRONG LAUNCH!' : 'JUST ENOUGH!');
     this.time.delayedCall(700, () => {
       if (this.launchLabel.text.startsWith('POWER')) this.launchLabel.setText('HOLD SPACE');
     });
@@ -793,9 +901,13 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private handleModeChange(previous: SpecialMode, next: SpecialMode): void {
+  private handleModeChange(next: SpecialMode): void {
     this.activeMode = next;
-    if (next === 'laser-chase') {
+    if (next === 'mouse-hunt') {
+      this.mouseMotionMs = 0;
+      this.audio.cue('mouse');
+      this.messageText.setText('MOUSE HUNT!');
+    } else if (next === 'laser-chase') {
       this.audio.cue('laser');
       this.messageText.setText('LASER CHASE!');
       this.advanceLaserTarget();
@@ -805,11 +917,14 @@ export class GameScene extends Phaser.Scene {
       this.messageText.setText('ZOOMIES MULTIBALL!');
       this.spawnBall(false, new Phaser.Math.Vector2(-8, 4));
       this.spawnBall(false, new Phaser.Math.Vector2(8, 4));
-    } else if (previous !== 'normal') {
-      this.messageText.setText('BACK TO THE HUNT');
-      this.time.delayedCall(1100, () => this.messageText.setText(''));
+    } else if (next === 'roomba-rumble') {
+      this.roombaRouteProgress = 0;
+      this.positionRoomba(ROOMBA_PATH[0].x, ROOMBA_PATH[0].y, 0);
+      this.audio.cue('vacuum');
+      this.messageText.setText('ROOMBA RUMBLE! CHASE IT!');
     }
     this.showActiveLaserTarget();
+    this.renderEnemyTargets(this.lastSnapshot);
   }
 
   private advanceLaserTarget(): void {
@@ -856,6 +971,100 @@ export class GameScene extends Phaser.Scene {
     if (this.laserMoveRemaining <= 0) this.advanceLaserTarget();
   }
 
+  private updateEnemyTargets(delta: number): void {
+    if (this.activeMode === 'mouse-hunt' && this.mouseTarget) {
+      this.mouseMotionMs = (this.mouseMotionMs + Math.min(delta, 50)) % (MOUSE_PATH.length * MOUSE_SEGMENT_MS);
+      const segment = Math.floor(this.mouseMotionMs / MOUSE_SEGMENT_MS);
+      const local = (this.mouseMotionMs % MOUSE_SEGMENT_MS) / MOUSE_SEGMENT_MS;
+      const start = MOUSE_PATH[segment];
+      const end = MOUSE_PATH[(segment + 1) % MOUSE_PATH.length];
+      const travel = this.options.reducedMotion ? (local < 0.72 ? 0 : 1) : Phaser.Math.Clamp((local - 0.28) / 0.72, 0, 1);
+      const eased = this.options.reducedMotion ? travel : Phaser.Math.Easing.Sine.InOut(travel);
+      const mouseX = Phaser.Math.Linear(start.x, end.x, eased);
+      const mouseY = Phaser.Math.Linear(start.y, end.y, eased);
+      const bob = this.options.reducedMotion || travel === 0 || travel === 1 ? 0 : Math.sin(local * Math.PI * 8) * 5;
+      this.mouseTarget.setPosition(mouseX, mouseY + bob);
+      this.mouseTarget.setFlipX(end.x < start.x);
+      this.mouseTarget.setRotation(this.options.reducedMotion ? 0 : Math.sin(local * Math.PI * 4) * 0.035);
+
+      this.mousePathGuide.clear();
+      this.mousePathGuide.lineStyle(5, 0xf7dc99, 0.2);
+      this.mousePathGuide.lineBetween(start.x, start.y, mouseX, mouseY);
+      this.mousePathGuide.lineStyle(3, 0xffefbd, 0.72);
+      const remaining = Phaser.Math.Distance.Between(mouseX, mouseY, end.x, end.y);
+      const dots = Math.max(1, Math.floor(remaining / 30));
+      for (let index = 1; index <= dots; index += 1) {
+        if (index % 2 === 0) continue;
+        const progress = index / dots;
+        const dotX = Phaser.Math.Linear(mouseX, end.x, progress);
+        const dotY = Phaser.Math.Linear(mouseY, end.y, progress);
+        this.mousePathGuide.fillStyle(0xffefbd, 0.32 + progress * 0.4).fillCircle(dotX, dotY, 4);
+      }
+      const markerPulse = this.options.reducedMotion ? 11 : 11 + Math.sin(this.time.now * 0.009) * 3;
+      this.mousePathGuide.lineStyle(3, 0xffefbd, 0.9).strokeCircle(end.x, end.y, markerPulse);
+      this.mousePathGuide.fillStyle(0xffefbd, 0.88).fillCircle(end.x, end.y, 4);
+    }
+
+    if (this.activeMode === 'roomba-rumble' && this.roombaTarget) {
+      const speed = Math.max(
+        ROOMBA_MIN_SEGMENT_MS,
+        ROOMBA_BASE_SEGMENT_MS - (this.lastSnapshot?.roombaHits ?? 0) * 70,
+      );
+      this.roombaRouteProgress = (this.roombaRouteProgress + Math.min(delta, 50) / speed) % ROOMBA_PATH.length;
+      const segment = Math.floor(this.roombaRouteProgress);
+      const local = this.roombaRouteProgress - segment;
+      const start = ROOMBA_PATH[segment];
+      const end = ROOMBA_PATH[(segment + 1) % ROOMBA_PATH.length];
+      const travel = this.options.reducedMotion ? (local < 0.78 ? 0 : 1) : Phaser.Math.Clamp((local - 0.12) / 0.88, 0, 1);
+      const eased = this.options.reducedMotion ? travel : Phaser.Math.Easing.Sine.InOut(travel);
+      const roombaX = Phaser.Math.Linear(start.x, end.x, eased);
+      const roombaY = Phaser.Math.Linear(start.y, end.y, eased);
+      const tilt = this.options.reducedMotion ? 0 : Phaser.Math.Clamp((end.y - start.y) / 900, -0.13, 0.13);
+      this.positionRoomba(roombaX, roombaY, tilt);
+
+      this.roombaRouteGuide.clear();
+      this.roombaRouteGuide.lineStyle(12, 0x63d6d1, 0.12).lineBetween(roombaX, roombaY, end.x, end.y);
+      this.roombaRouteGuide.lineStyle(3, 0xffcf70, 0.72).lineBetween(roombaX, roombaY, end.x, end.y);
+      const markerPulse = this.options.reducedMotion ? 18 : 18 + Math.sin(this.time.now * 0.008) * 4;
+      this.roombaRouteGuide.lineStyle(5, 0xffcf70, 0.9).strokeCircle(end.x, end.y, markerPulse);
+      this.roombaRouteGuide.fillStyle(0x63d6d1, 0.75).fillCircle(end.x, end.y, 7);
+
+      const pulse = this.options.reducedMotion ? 0.9 : 0.86 + Math.sin(this.time.now * 0.006) * 0.12;
+      this.roombaHalo.setAlpha(pulse);
+    }
+  }
+
+  private positionRoomba(x: number, y: number, rotation: number): void {
+    this.roombaTarget.setPosition(x, y).setRotation(rotation);
+    this.roombaHalo.setPosition(x, y);
+    this.roombaLamps.forEach((lamp, index) => {
+      const angle = Math.PI + (index / Math.max(1, this.roombaLamps.length - 1)) * Math.PI;
+      lamp.setPosition(x + Math.cos(angle) * 76, y + Math.sin(angle) * 53);
+    });
+    this.roombaLabel.setPosition(x, y + 98);
+  }
+
+  private renderEnemyTargets(snapshot: GameSnapshot): void {
+    if (!this.mouseTarget || !this.roombaTarget) return;
+    const mouseActive = snapshot.mode === 'mouse-hunt';
+    this.mouseTarget.setVisible(mouseActive);
+    this.mousePathGuide.setVisible(mouseActive);
+    if (!mouseActive) this.mousePathGuide.clear();
+
+    const roombaActive = snapshot.mode === 'roomba-rumble';
+    this.roombaTarget.setVisible(roombaActive);
+    this.roombaRouteGuide.setVisible(roombaActive);
+    if (!roombaActive) this.roombaRouteGuide.clear();
+    this.roombaHalo.setVisible(roombaActive).setAlpha(roombaActive ? 0.9 : 0);
+    this.roombaLamps.forEach((lamp, index) => {
+      const lit = index < snapshot.roombaHits;
+      lamp.setVisible(roombaActive)
+        .setFillStyle(lit ? 0xffcf70 : 0x332d3d, 1)
+        .setStrokeStyle(2, lit ? 0xfff1bd : 0xffcf70, lit ? 1 : 0.8);
+    });
+    this.roombaLabel.setVisible(roombaActive).setText(`VACUUM ${snapshot.roombaHits}/${snapshot.roombaGoal}`);
+  }
+
   private updateTrails(): void {
     this.trailGraphics.clear();
     for (const ball of this.balls) {
@@ -889,7 +1098,7 @@ export class GameScene extends Phaser.Scene {
     const previousMode = this.activeMode;
     const snapshot = this.rules.dispatch(event);
     this.emitSnapshot(snapshot);
-    if (snapshot.mode !== previousMode) this.handleModeChange(previousMode, snapshot.mode);
+    if (snapshot.mode !== previousMode) this.handleModeChange(snapshot.mode);
     return snapshot;
   }
 
@@ -898,6 +1107,7 @@ export class GameScene extends Phaser.Scene {
     this.lastSnapshot = snapshot;
     this.ballSaveLamp?.setFillStyle(0x62f6a9, snapshot.ballSaveActive ? 0.95 : 0.12);
     this.renderBoxLocks(snapshot);
+    this.renderEnemyTargets(snapshot);
     if (snapshot.message && messageChanged) {
       this.messageText?.setText(snapshot.message);
       this.time?.delayedCall(900, () => {

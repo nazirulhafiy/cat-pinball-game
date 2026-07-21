@@ -15,8 +15,9 @@ export const RIGHT_REST_ANGLE = Math.PI - LEFT_REST_ANGLE;
 export const LEFT_ACTIVE_ANGLE = -0.48;
 export const RIGHT_ACTIVE_ANGLE = Math.PI - LEFT_ACTIVE_ANGLE;
 export const LAUNCH_CHARGE_MS = 900;
-export const MIN_LAUNCH_SPEED = 36;
-export const MAX_LAUNCH_SPEED = 44;
+export const MIN_LAUNCH_CHARGE = 0.28;
+export const MIN_LAUNCH_SPEED = 27;
+export const MAX_LAUNCH_SPEED = 46;
 
 export type LauncherSpringPose = {
   offsetX: number;
@@ -86,5 +87,9 @@ export function launcherSpringPose(charge: number, heldMs: number): LauncherSpri
 }
 
 export function launchSpeedForCharge(charge: number): number {
-  return MIN_LAUNCH_SPEED + (MAX_LAUNCH_SPEED - MIN_LAUNCH_SPEED) * clamp(charge, 0, 1);
+  const clamped = clamp(charge, 0, 1);
+  if (clamped < MIN_LAUNCH_CHARGE) return 0;
+  const usableCharge = (clamped - MIN_LAUNCH_CHARGE) / (1 - MIN_LAUNCH_CHARGE);
+  const powerCurve = usableCharge * usableCharge;
+  return MIN_LAUNCH_SPEED + (MAX_LAUNCH_SPEED - MIN_LAUNCH_SPEED) * powerCurve;
 }

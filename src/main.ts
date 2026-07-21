@@ -1,7 +1,7 @@
 import { CAT_IDS, CAT_PROFILES } from './game/cats';
 import { createGame } from './game/createGame';
 import { GameAudio } from './game/audio';
-import type { CatId, GameController, GameSnapshot } from './game/contracts';
+import type { CatId, GameController, GameSnapshot, SpecialMode } from './game/contracts';
 import './styles.css';
 
 const HIGH_SCORE_KEY = 'nine-lives-high-score';
@@ -23,9 +23,20 @@ let controller: GameController | null = null;
 let launchGuideDismissed = false;
 const titleAudio = new GameAudio();
 titleAudio.setMuted(muted);
+const MODE_LABELS: Record<SpecialMode, string> = {
+  normal: 'Midnight Zoomies',
+  'mouse-hunt': 'Mouse Hunt',
+  'laser-chase': 'Laser Chase',
+  zoomies: 'Zoomies',
+  'roomba-rumble': 'Vacuum Fight',
+};
 
 const money = (value: number) => value.toLocaleString('en-US');
 const uiAccent = (cat: (typeof CAT_PROFILES)[CatId]) => cat.id === 'tuxedo' || cat.id === 'white' ? cat.cssAccent : cat.cssPrimary;
+const lifeBalls = (cat: CatId, count: number) => Array.from(
+  { length: Math.max(0, count) },
+  () => `<img class="life-ball" src="/assets/cats/${cat}/ball-v1.png" alt="" aria-hidden="true">`,
+).join('');
 const el = <T extends HTMLElement>(selector: string) => {
   const element = document.querySelector<T>(selector);
   if (!element) throw new Error(`Missing UI element: ${selector}`);
@@ -174,7 +185,7 @@ function renderTitle() {
 }
 
 function showHowToPlay() {
-  app.insertAdjacentHTML('beforeend', `<section class="overlay" role="dialog" aria-modal="true" aria-labelledby="how-to-title"><div class="overlay-card how-to-card"><p class="eyebrow">House rules</p><h2 id="how-to-title">Make some mischief</h2><div class="how-to-steps"><p><b>1</b><span><strong>Wind and launch</strong>Hold Space or Launch, then release.</span></p><p><b>2</b><span><strong>Bat the ball</strong>Use A and D, or the arrow keys.</span></p><p><b>3</b><span><strong>Chase the laser</strong>Follow the moving red beam and hit its active target.</span></p></div><button id="close-how-to" class="play-button" type="button">Got it</button></div></section>`);
+  app.insertAdjacentHTML('beforeend', `<section class="overlay" role="dialog" aria-modal="true" aria-labelledby="how-to-title"><div class="overlay-card how-to-card"><p class="eyebrow">House rules</p><h2 id="how-to-title">Make some mischief</h2><div class="how-to-steps"><p><b>1</b><span><strong>Wind and launch</strong>Hold Space or Launch, then release.</span></p><p><b>2</b><span><strong>Bat the ball</strong>Use A for the left flipper and D for the right.</span></p><p><b>3</b><span><strong>Hit what moves</strong>Catch the mouse for a bonus. Hit the moving red dot four times to finish Laser Chase.</span></p><p><b>4</b><span><strong>Wake the vacuum</strong>Open the box three times for Zoomies. Finish Laser Chase and Zoomies to wake the vacuum.</span></p></div><button id="close-how-to" class="play-button" type="button">Got it</button></div></section>`);
   el<HTMLButtonElement>('#close-how-to').focus();
   el<HTMLButtonElement>('#close-how-to').addEventListener('click', () => document.querySelector('.overlay')?.remove());
 }
@@ -216,13 +227,13 @@ function renderGame() {
   const cat = CAT_PROFILES[selectedCat];
   launchGuideDismissed = false;
   app.innerHTML = `<main class="shell game-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
-    <header class="game-header"><button id="home" class="word-button" type="button">← Cats</button><div class="game-title"><span>Nine Lives</span><b>Midnight Zoomies</b></div><div class="header-actions"><button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button><button id="pause" class="icon-button" type="button" aria-label="Pause game">Ⅱ</button></div></header>
-    <section class="hud" aria-label="Game status"><div><span>Score</span><strong id="score">0</strong></div><div><span>High score</span><strong id="high-score">${money(highScore)}</strong></div><div><span>Lives</span><strong id="lives" aria-label="3 lives">● ● ●</strong></div><div class="hunt"><span>Hunt Meter <b id="hunt-text">0 / 3</b></span><i><b id="hunt-fill"></b></i></div></section>
-    <section class="play-area"><aside class="mode-card"><p id="mode-label">Tonight's hunt</p><strong id="objective">Light the windows</strong><span id="mode-timer">Ready when you are</span></aside><div class="table-column"><div class="table-wrap"><div id="game-mount" tabindex="0" aria-label="Pinball table"></div><div id="launch-guide" class="launch-guide" role="note"><p>Ready to launch</p><strong>Hold <kbd>Space</kbd> to charge</strong><span>Release to launch</span><small><kbd>A</kbd> / <kbd>←</kbd> left flipper · <kbd>D</kbd> / <kbd>→</kbd> right flipper</small></div><div id="save-status" class="save-status">Ball save ready</div></div></div><aside class="combo-card"><p>Combo</p><strong id="combo">×0</strong><span id="objective-status">Ready to launch</span><span id="balls-in-play">0 balls in play</span></aside><aside class="controls-card key-help" aria-label="Keyboard controls"><p>Controls</p><div class="control-item"><span><kbd>A</kbd><kbd>←</kbd></span><strong>Left flipper</strong></div><div class="control-item"><span><kbd>D</kbd><kbd>→</kbd></span><strong>Right flipper</strong></div><div class="control-item"><span><kbd>Space</kbd></span><strong>Hold and release</strong></div></aside></section>
+    <header class="game-header arcade-hud" aria-label="Game status"><button id="home" class="word-button" type="button">← Cats</button><div class="score-stat"><span>Score</span><strong id="score">0</strong><small>Best <b id="high-score">${money(highScore)}</b></small></div><div class="lives-stat"><span>Lives</span><strong id="lives" data-count="3" aria-label="3 lives">${lifeBalls(selectedCat, 3)}</strong></div><div class="game-title"><span>Nine Lives</span><b id="game-subtitle">Midnight Zoomies</b></div><div class="header-actions"><button id="game-help" class="icon-button" type="button" aria-label="How to play">?</button><button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button><button id="pause" class="icon-button" type="button" aria-label="Pause game">Ⅱ</button></div></header>
+    <section class="play-area"><div class="table-column"><div class="table-wrap"><div id="game-mount" tabindex="0" aria-label="Pinball table"></div><div id="launch-guide" class="launch-guide" role="note"><p>Launcher</p><strong>Hold <kbd>Space</kbd> · Release</strong><small><kbd>A</kbd> left · <kbd>D</kbd> right</small></div></div></div></section>
     <section class="control-row" aria-label="Touch controls"><div class="touch-controls"><button class="touch-button" data-control="left" type="button" aria-label="Left flipper">Left</button><button class="touch-button launch" data-control="launch" type="button" aria-label="Hold and release to launch ball">Launch</button><button class="touch-button" data-control="right" type="button" aria-label="Right flipper">Right</button></div></section>
     <div id="live-status" class="sr-only" aria-live="polite"></div>
   </main>`;
   el('#home').addEventListener('click', renderTitle);
+  el('#game-help').addEventListener('click', showHowToPlay);
   el('#pause').addEventListener('click', pauseGame);
   bindMute();
   document.querySelectorAll<HTMLButtonElement>('[data-control]').forEach(bindTouchControl);
@@ -240,18 +251,18 @@ function updateHud(next: GameSnapshot) {
   highScore = Math.max(highScore, next.highScore, next.score);
   localStorage.setItem(HIGH_SCORE_KEY, String(highScore));
   el('#high-score').textContent = money(highScore);
-  el('#lives').textContent = Array.from({ length: Math.max(next.lives, 0) }, () => '●').join(' ') || '0';
-  el('#lives').setAttribute('aria-label', `${next.lives} lives`);
-  el('#combo').textContent = `×${next.combo}`;
-  el('#hunt-text').textContent = `${next.hunt} / ${next.huntGoal}`;
-  el<HTMLElement>('#hunt-fill').style.width = `${Math.min(100, (next.hunt / Math.max(1, next.huntGoal)) * 100)}%`;
-  el('#objective').textContent = next.objective;
-  el('#objective-status').textContent = next.combo > 0 ? `Combo ×${next.combo}` : next.phase === 'ready' ? 'Ready to launch' : next.mode === 'normal' ? 'On the hunt' : next.mode.replace('-', ' ');
-  el('#mode-label').textContent = next.mode === 'normal' ? "Tonight's hunt" : next.mode.replace('-', ' ');
-  el('#mode-timer').textContent = next.modeSeconds ? `${next.modeSeconds}s remaining` : next.message || 'Ready when you are';
-  el('#save-status').classList.toggle('active', next.ballSaveActive);
-  el('#save-status').textContent = next.phase === 'ready' ? 'Ball save starts on launch' : next.ballSaveActive ? 'Ball save active' : 'Ball save used';
-  el('#balls-in-play').textContent = `${next.ballsInPlay} ball${next.ballsInPlay === 1 ? '' : 's'} in play`;
+  const lives = el('#lives');
+  const lifeCount = Math.max(next.lives, 0);
+  if (lives.dataset.count !== String(lifeCount)) {
+    lives.dataset.count = String(lifeCount);
+    lives.innerHTML = lifeBalls(selectedCat, lifeCount);
+  }
+  lives.setAttribute('aria-label', `${next.lives} lives`);
+  el('#game-subtitle').textContent = next.mode !== 'normal'
+    ? `${MODE_LABELS[next.mode]}${next.modeSeconds ? ` · ${next.modeSeconds}s` : ''}`
+    : next.bossReady
+      ? 'Vacuum ready'
+      : MODE_LABELS.normal;
   if (next.phase !== 'ready') launchGuideDismissed = true;
   const launchGuide = document.querySelector<HTMLElement>('#launch-guide');
   if (launchGuide) {

@@ -50,9 +50,13 @@ Mika, Domino, Marmalade, Pepper, and Wisp each have a production portrait and cu
 - The three vase variants use zigzag, vertical-stripe, and fish-scale patterns while sharing identical physics.
 - Reusable guide-rail runtime canvas: 280 by 48 pixels, scaled and rotated over unchanged Matter walls.
 - Kitchen-ramp runtime canvas: 270 by 105 pixels, centered at 729,838 and rotated by -0.96 radians.
+- Mouse runtime sprite: 160 by 103 pixels, displayed over a sensor-only 96 by 48 Matter rectangle during Mouse Hunt.
+- Robot-vacuum runtime sprite: 220 by 162 pixels, displayed over a sensor-only radius-88 Matter circle during Roomba Rumble.
 - Tail-launcher runtime canvas: 120 by 240 pixels, placed beside the launcher ball as non-colliding spring decoration.
 - Transparent masters are stored under `art/source/objects/`.
 - Shared runtime sprites are stored under `public/assets/table/objects/`; cat-specific parts are stored under `public/assets/cats/<cat>/`.
+
+The mouse and robot-vacuum masters were generated against the approved table concept on removable chroma-key backgrounds, then reviewed and converted to alpha PNGs. Their retained chroma sources live under `art/generated/enemies/`.
 
 ## Generated cat-part sources
 

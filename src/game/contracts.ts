@@ -17,7 +17,7 @@ export interface CatProfile {
 }
 
 export type GamePhase = 'ready' | 'playing' | 'paused' | 'game-over';
-export type SpecialMode = 'normal' | 'laser-chase' | 'zoomies';
+export type SpecialMode = 'normal' | 'mouse-hunt' | 'laser-chase' | 'zoomies' | 'roomba-rumble';
 
 export interface GameSnapshot {
   phase: GamePhase;
@@ -26,10 +26,14 @@ export interface GameSnapshot {
   highScore: number;
   lives: number;
   combo: number;
-  hunt: number;
-  huntGoal: number;
+  mouseHits: number;
+  mouseGoal: number;
+  roombaHits: number;
+  roombaGoal: number;
+  laserComplete: boolean;
+  zoomiesComplete: boolean;
+  bossReady: boolean;
   modeSeconds: number;
-  objective: string;
   ballSaveActive: boolean;
   ballsInPlay: number;
   boxLocks: number;

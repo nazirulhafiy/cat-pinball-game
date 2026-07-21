@@ -11,6 +11,8 @@ export type SoundCue =
   | 'drain'
   | 'save'
   | 'multiball'
+  | 'mouse'
+  | 'vacuum'
   | 'select'
   | 'pause';
 
@@ -83,6 +85,8 @@ export class GameAudio {
       case 'drain': this.tone(260, 0.45, 'sine', 0.3, 48); break;
       case 'save': this.chord([440, 660, 880], 0.25, 'sine', 0.22); break;
       case 'multiball': this.chord([330, 440, 660], 0.34, 'square', 0.16); break;
+      case 'mouse': this.chord([880, 1047, 1319], 0.16, 'sine', 0.16); break;
+      case 'vacuum': this.tone(92, 0.42, 'sawtooth', 0.18, 58); break;
       case 'select': {
         if (context.currentTime - this.lastSelectionAt < 0.11) break;
         this.lastSelectionAt = context.currentTime;

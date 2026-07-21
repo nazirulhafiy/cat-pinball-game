@@ -3,6 +3,7 @@ import {
   BALL_RADIUS,
   LEFT_ACTIVE_ANGLE,
   LEFT_PIVOT,
+  MIN_LAUNCH_CHARGE,
   RIGHT_ACTIVE_ANGLE,
   RIGHT_PIVOT,
   centerDrainGap,
@@ -40,9 +41,11 @@ describe('pinball table physics', () => {
     expect(launcherChargeFromHold(0)).toBe(0);
     expect(launcherChargeFromHold(450)).toBe(0.5);
     expect(launcherChargeFromHold(1800)).toBe(1);
-    expect(launchSpeedForCharge(0)).toBe(36);
-    expect(launchSpeedForCharge(0.5)).toBe(40);
-    expect(launchSpeedForCharge(2)).toBe(44);
+    expect(launchSpeedForCharge(0)).toBe(0);
+    expect(launchSpeedForCharge(MIN_LAUNCH_CHARGE - 0.01)).toBe(0);
+    expect(launchSpeedForCharge(MIN_LAUNCH_CHARGE)).toBe(27);
+    expect(launchSpeedForCharge(0.5)).toBeCloseTo(28.77, 2);
+    expect(launchSpeedForCharge(2)).toBe(46);
   });
 
   it('compresses and trembles the tail like a wound spring', () => {
