@@ -94,6 +94,16 @@ function leaderboardRows(currentEntryId: string) {
   }).join('');
 }
 
+function titleHighScoreMarkup() {
+  const topScore = leaderboard[0];
+  const topPlayerName = topScore?.playerName ?? playerName;
+  const topScoreValue = topScore?.score ?? highScore;
+  if (!topPlayerName || topScoreValue <= 0) return '';
+  const safePlayerName = escapeHtml(topPlayerName);
+  const formattedScore = money(topScoreValue);
+  return `<span class="title-best" aria-label="All-time high score: ${safePlayerName}, ${formattedScore}"><small>All-time high</small><span><b>${safePlayerName}</b><strong>${formattedScore}</strong></span></span>`;
+}
+
 function renderWelcome() {
   if (playerName) {
     renderTitle();
@@ -192,7 +202,7 @@ function renderTitle() {
   app.innerHTML = `<main class="shell title-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
     <header class="title-nav">
       <span class="title-mark" aria-hidden="true">✦</span>
-      <div class="title-nav-actions"><button id="how-to-play" class="title-nav-button" type="button">How to play</button>${highScore > 0 ? `<span class="title-best">Best <b>${money(highScore)}</b></span>` : ''}<button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button></div>
+      <div class="title-nav-actions"><button id="how-to-play" class="title-nav-button" type="button">How to play</button>${titleHighScoreMarkup()}<button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button></div>
     </header>
     <section class="title-stage" aria-labelledby="choose-title">
       <div class="title-intro"><h1 id="choose-title"><span>Cat Balls:</span> Paws of Chaos</h1><p>Choose your cat.</p></div>
