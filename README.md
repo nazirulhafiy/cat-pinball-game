@@ -7,6 +7,7 @@ A playful browser pinball game about five house cats causing harmless midnight c
 - Five cosmetic cat choices with identical gameplay physics
 - Animated loading screen on every site load
 - One-time player-name registration saved on the current device
+- Original procedural background music with an upbeat, cheeky cat theme
 - Cat-matched ball, paw-flipper, and tail-launcher artwork
 - Hold-and-release launcher with a minimum charge threshold and nonlinear launch strength
 - Responsive paw flippers and a genuine centre drain

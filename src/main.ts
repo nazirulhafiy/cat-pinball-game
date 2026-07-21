@@ -109,6 +109,7 @@ function renderWelcome() {
     renderTitle();
     return;
   }
+  titleAudio.stopMusic();
   controller?.destroy();
   controller = null;
   app.innerHTML = `<main class="shell welcome-shell">
@@ -196,6 +197,7 @@ function shiftSelectedCat(direction: -1 | 1) {
 }
 
 function renderTitle() {
+  titleAudio.stopMusic();
   controller?.destroy();
   controller = null;
   const cat = CAT_PROFILES[selectedCat];
@@ -237,6 +239,7 @@ function showHowToPlay() {
 
 function beginTransformation() {
   const cat = CAT_PROFILES[selectedCat];
+  void titleAudio.unlock().then(() => titleAudio.startMusic(true));
   app.insertAdjacentHTML('beforeend', `<section class="transformation ${reducedMotion ? 'reduced' : ''}" aria-label="Starting game">${transformationCatArt(selectedCat)}<p>${cat.name} is catching the moonbeam...</p><button id="skip-transform" type="button">Skip</button></section>`);
   let started = false;
   const start = () => {
@@ -319,9 +322,10 @@ function updateHud(next: GameSnapshot) {
 
 function pauseGame() {
   controller?.pause();
-  app.insertAdjacentHTML('beforeend', `<section class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="overlay-card"><p class="eyebrow">Paws for a moment</p><h2 id="pause-title">Game paused</h2><p>The house will wait for you.</p><button id="resume" class="play-button" type="button">Resume game</button><button id="restart-from-pause" class="text-button" type="button">Restart run</button></div></section>`);
+  titleAudio.pauseMusic();
+  app.insertAdjacentHTML('beforeend', `<section class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="overlay-card"><p class="eyebrow">Paws for a moment</p><h2 id="pause-title">Game paused</h2><p>The house will wait for you.</p><button id="resume" class="play-button" type="button">Resume game</button><button id="restart-from-pause" class="secondary-button" type="button">Restart run</button></div></section>`);
   el('#resume').focus();
-  el('#resume').addEventListener('click', () => { document.querySelector('.overlay')?.remove(); controller?.resume(); });
+  el('#resume').addEventListener('click', () => { document.querySelector('.overlay')?.remove(); controller?.resume(); titleAudio.resumeMusic(); });
   el('#restart-from-pause').addEventListener('click', restartGame);
 }
 
@@ -330,10 +334,12 @@ function restartGame() {
   launchGuideDismissed = false;
   controller?.restart();
   controller?.resume();
+  titleAudio.startMusic(true);
   setLive('New game started.');
 }
 
 function showGameOver(score: number) {
+  titleAudio.stopMusic();
   highScore = Math.max(highScore, score);
   localStorage.setItem(HIGH_SCORE_KEY, String(highScore));
   const cat = CAT_PROFILES[selectedCat];
