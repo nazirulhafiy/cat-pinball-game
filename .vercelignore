@@ -1,0 +1,9 @@
+art/
+coverage/
+dist/
+node_modules/
+output/
+.git/
+.playwright-cli/
+*.log
+*.tsbuildinfo
