@@ -27,6 +27,7 @@ let leaderboard = loadLeaderboard();
 let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let controller: GameController | null = null;
 let launchGuideDismissed = false;
+let runStartingHighScore = highScore;
 const titleAudio = new GameAudio();
 titleAudio.setMuted(muted);
 const MODE_LABELS: Record<SpecialMode, string> = {
@@ -83,17 +84,6 @@ function loadLeaderboard(): ScoreEntry[] {
   }
 }
 
-function leaderboardRows(currentEntryId: string) {
-  return leaderboard.map((entry, index) => {
-    const cat = CAT_PROFILES[entry.catId];
-    return `<li class="${entry.id === currentEntryId ? 'is-current' : ''}">
-      <span class="leaderboard-rank">${index + 1}</span>
-      <span class="leaderboard-player"><strong>${escapeHtml(entry.playerName)}</strong><small>${cat.name}</small></span>
-      <b>${money(entry.score)}</b>
-    </li>`;
-  }).join('');
-}
-
 function titleHighScoreMarkup() {
   const topScore = leaderboard[0];
   const topPlayerName = topScore?.playerName ?? playerName;
@@ -101,7 +91,7 @@ function titleHighScoreMarkup() {
   if (!topPlayerName || topScoreValue <= 0) return '';
   const safePlayerName = escapeHtml(topPlayerName);
   const formattedScore = money(topScoreValue);
-  return `<span class="title-best" aria-label="All-time high score: ${safePlayerName}, ${formattedScore}"><small>All-time high</small><span><b>${safePlayerName}</b><strong>${formattedScore}</strong></span></span>`;
+  return `<span class="title-best" aria-label="Best score on this device: ${safePlayerName}, ${formattedScore}"><small>Device best</small><span><b>${safePlayerName}</b><strong>${formattedScore}</strong></span></span>`;
 }
 
 function renderWelcome() {
@@ -254,6 +244,7 @@ function beginTransformation() {
 function startGame() {
   document.querySelector('.transformation')?.remove();
   renderGame();
+  runStartingHighScore = highScore;
   const mount = el<HTMLElement>('#game-mount');
   controller = createGame({
     parent: mount,
@@ -277,7 +268,7 @@ function renderGame() {
   app.innerHTML = `<main class="shell game-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
     <header class="game-header arcade-hud" aria-label="Game status"><button id="home" class="word-button" type="button">← Cats</button><div class="score-stat"><span>Score</span><strong id="score">0</strong><small>Best <b id="high-score">${money(highScore)}</b></small></div><div class="lives-stat"><span>Lives</span><strong id="lives" data-count="3" aria-label="3 lives">${lifeBalls(selectedCat, 3)}</strong></div><div class="game-title"><span>Cat Balls:</span><b id="game-subtitle">Paws of Chaos</b></div><div class="header-actions"><button id="game-help" class="icon-button" type="button" aria-label="How to play">?</button><button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button><button id="pause" class="icon-button" type="button" aria-label="Pause game">Ⅱ</button></div></header>
     <section class="play-area"><div class="table-column"><div class="table-wrap"><div id="game-mount" tabindex="0" aria-label="Pinball table"></div><div id="launch-guide" class="launch-guide" role="note"><p>Launcher</p><strong>Hold <kbd>Space</kbd> · Release</strong><small><kbd>A</kbd> left · <kbd>D</kbd> right</small></div></div></div></section>
-    <section class="control-row" aria-label="Touch controls"><div class="touch-controls"><button class="touch-button" data-control="left" type="button" aria-label="Left flipper">Left</button><button class="touch-button launch" data-control="launch" type="button" aria-label="Hold and release to launch ball">Launch</button><button class="touch-button" data-control="right" type="button" aria-label="Right flipper">Right</button></div></section>
+    <section class="control-row" aria-label="Touch controls"><div class="touch-controls"><button class="touch-button flipper" data-control="left" type="button" aria-label="Left flipper"><span class="controller-symbol" aria-hidden="true">L</span><span class="control-label">Left</span></button><button class="touch-button launch" data-control="launch" type="button" aria-label="Hold and release to launch ball"><span class="controller-symbol" aria-hidden="true">A</span><span class="control-label">Launch</span></button><button class="touch-button flipper" data-control="right" type="button" aria-label="Right flipper"><span class="control-label">Right</span><span class="controller-symbol" aria-hidden="true">R</span></button></div></section>
     <div id="live-status" class="sr-only" aria-live="polite"></div>
   </main>`;
   el('#home').addEventListener('click', renderTitle);
@@ -332,6 +323,7 @@ function pauseGame() {
 function restartGame() {
   document.querySelector('.overlay')?.remove();
   launchGuideDismissed = false;
+  runStartingHighScore = highScore;
   controller?.restart();
   controller?.resume();
   titleAudio.startMusic(true);
@@ -340,6 +332,7 @@ function restartGame() {
 
 function showGameOver(score: number) {
   titleAudio.stopMusic();
+  const isNewPersonalBest = score > runStartingHighScore;
   highScore = Math.max(highScore, score);
   localStorage.setItem(HIGH_SCORE_KEY, String(highScore));
   const cat = CAT_PROFILES[selectedCat];
@@ -352,7 +345,12 @@ function showGameOver(score: number) {
   };
   leaderboard = addLeaderboardEntry(leaderboard, currentEntry);
   localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
-  app.insertAdjacentHTML('beforeend', `<section class="overlay" role="dialog" aria-modal="true" aria-labelledby="game-over-title"><div class="overlay-card game-over" style="--cat-primary:${uiAccent(cat)}"><p class="eyebrow">The sun is coming up</p><h2 id="game-over-title">Nine lives spent</h2><div class="final-score"><span>Final score</span><strong>${money(score)}</strong><span>Personal best: ${money(highScore)}</span></div><section class="leaderboard-panel" aria-labelledby="leaderboard-title"><div class="leaderboard-heading"><h3 id="leaderboard-title">All-time high scores</h3><span>On this device</span></div><ol>${leaderboardRows(currentEntry.id)}</ol></section><button id="retry" class="play-button" type="button">Zoom again as ${cat.name}</button><button id="choose-again" class="text-button" type="button">Choose another cat</button></div></section>`);
+  const resultNote = isNewPersonalBest
+    ? 'New personal best'
+    : score === runStartingHighScore && score > 0
+      ? 'Matched personal best'
+      : `Personal best ${money(highScore)}`;
+  app.insertAdjacentHTML('beforeend', `<section class="overlay" role="dialog" aria-modal="true" aria-labelledby="game-over-title"><div class="overlay-card game-over" style="--cat-primary:${uiAccent(cat)}"><p class="eyebrow">The sun is coming up</p><h2 id="game-over-title">Nine lives spent</h2><div class="final-score"><span>Final score</span><strong>${money(score)}</strong><small class="result-note${isNewPersonalBest ? ' is-best' : ''}">${resultNote}</small></div><button id="retry" class="play-button" type="button">Zoom again as ${cat.name}</button><button id="choose-again" class="text-button" type="button">Choose another cat</button></div></section>`);
   el('#retry').focus();
   el('#retry').addEventListener('click', restartGame);
   el('#choose-again').addEventListener('click', renderTitle);
