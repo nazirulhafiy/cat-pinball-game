@@ -1,0 +1,68 @@
+# Cat Pinball Game
+
+> Working title: **Nine Lives: Midnight Zoomies**
+
+A playful browser pinball game about five house cats causing harmless midnight chaos. Choose Mika, Domino, Marmalade, Pepper, or Wisp, then launch the selected cat-comet into a hand-illustrated house table.
+
+The repository name is intentionally neutral while the final public game title is still being decided.
+
+## Current playable features
+
+- Five cosmetic cat choices with identical gameplay physics
+- Cat-matched ball, paw-flipper, and tail-launcher artwork
+- Hold-and-release launcher with charge-dependent velocity
+- Responsive paw flippers and a genuine centre drain
+- Moving laser-pointer target and Hunt Meter
+- Knockable vase sequence
+- Three-hit cardboard-box lock leading to Zoomies Multiball
+- Three lives, ball save, combos, scoring, pause, restart, and local high score
+- Keyboard controls and touch controls on mobile layouts
+
+## Local development
+
+```sh
+npm install
+npm run dev
+```
+
+Useful checks:
+
+```sh
+npm run check
+npm run build
+npm run preview
+```
+
+## Controls
+
+- Left paw: `A` or Left Arrow
+- Right paw: `D` or Right Arrow
+- Wind and launch: hold `Space`, then release
+- Pause: `P`
+- Restart: `R`
+
+## Architecture
+
+The interface is a small TypeScript application mounted by `src/main.ts`. Phaser renders the table and Matter-based collisions at a fixed internal aspect ratio, while the surrounding interface handles character selection, HUD updates, overlays, responsive controls, and browser storage.
+
+Cat selection is cosmetic. Every character uses the same mass, size, bounce, flipper strength, rules, and scoring opportunities.
+
+## Artwork
+
+Runtime artwork lives under `public/assets`. High-resolution masters, approved concepts, production references, and generated source sheets live under `art` so non-runtime material is not copied into the deployed bundle.
+
+The project uses original project-specific artwork, including assets developed through an AI-assisted illustration workflow and then reviewed, cropped, aligned, recoloured, or animated for the game. It does not load remote images, fonts, analytics, or third-party advertising.
+
+See [art/README.md](art/README.md) for the production conventions and source layout.
+
+## Deployment plan
+
+The application is designed for Vercel's Vite preset:
+
+- Build command: `npm run build`
+- Output directory: `dist`
+- Environment variables: none currently required
+
+Production deployment will be connected to the `main` branch after the public game title is settled. Until then, the project can use private repository and preview deployments.
+
+High scores currently remain in each player's browser. A global leaderboard would require a future backend or hosted database.
