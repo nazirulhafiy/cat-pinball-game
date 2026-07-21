@@ -1,4 +1,4 @@
-# Nine Lives art production guide
+# Cat Balls: Paws of Chaos art production guide
 
 The approved direction is the flat, hand-drawn cartoon style shown in:
 
@@ -26,7 +26,7 @@ The approved direction is the flat, hand-drawn cartoon style shown in:
 - High-resolution transparent masters are stored under `art/source/<cat>/`.
 - Runtime assets are stored under `public/assets/cats/<cat>/`.
 
-Mika, Domino, Marmalade, Pepper, and Wisp each have a production portrait and curled pinball form following these rules. Character-select portraits also include a registered closed-eye frame for cosmetic blink animation.
+Oyen, Tompok, Kicap, Belang, and Kapas each have a production portrait and curled pinball form following these rules. Character-select portraits also include a registered closed-eye frame for cosmetic blink animation.
 
 ## Table assets
 

@@ -1,14 +1,12 @@
-# Cat Pinball Game
+# Cat Balls: Paws of Chaos
 
-> Working title: **Nine Lives: Midnight Zoomies**
-
-A playful browser pinball game about five house cats causing harmless midnight chaos. Choose Mika, Domino, Marmalade, Pepper, or Wisp, then launch the selected cat-comet into a hand-illustrated house table.
-
-The repository name is intentionally neutral while the final public game title is still being decided.
+A playful browser pinball game about five house cats causing harmless midnight chaos. Choose Oyen, Tompok, Kicap, Belang, or Kapas, then launch the selected cat-comet into a hand-illustrated house table.
 
 ## Current playable features
 
 - Five cosmetic cat choices with identical gameplay physics
+- Animated loading screen on every site load
+- One-time player-name registration saved on the current device
 - Cat-matched ball, paw-flipper, and tail-launcher artwork
 - Hold-and-release launcher with a minimum charge threshold and nonlinear launch strength
 - Responsive paw flippers and a genuine centre drain
@@ -18,7 +16,7 @@ The repository name is intentionally neutral while the final public game title i
 - Three-hit cardboard-box lock leading to Zoomies Multiball
 - Moving Roomba Rumble boss that sweeps the lower table and accelerates as it takes hits
 - Roomba Rumble unlocks after finishing Laser Chase and surviving the full Zoomies timer in one run, then returning to one ball
-- Three lives, ball save, combos, scoring, pause, restart, and local high score
+- Three lives, ball save, combos, scoring, pause, restart, and an on-device all-time high-score table
 - Keyboard controls and touch controls on mobile layouts
 
 ## Local development
@@ -66,6 +64,6 @@ The application is designed for Vercel's Vite preset:
 - Output directory: `dist`
 - Environment variables: none currently required
 
-Production deployment will be connected to the `main` branch after the public game title is settled. Until then, the project can use private repository and preview deployments.
+Production deployment can be connected to the `main` branch when the game is ready to publish. Until then, the project can use private repository and preview deployments.
 
 High scores currently remain in each player's browser. A global leaderboard would require a future backend or hosted database.

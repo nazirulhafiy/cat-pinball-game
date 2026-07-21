@@ -3,7 +3,7 @@ import type { CatId, CatProfile } from './contracts';
 export const CAT_PROFILES: Record<CatId, CatProfile> = {
   calico: {
     id: 'calico',
-    name: 'Mika',
+    name: 'Tompok',
     title: 'Calico Charmer',
     description: 'Lucky, curious, and always ready to pounce.',
     primary: 0xf2b56b,
@@ -15,7 +15,7 @@ export const CAT_PROFILES: Record<CatId, CatProfile> = {
   },
   tuxedo: {
     id: 'tuxedo',
-    name: 'Domino',
+    name: 'Kicap',
     title: 'Tuxedo Tactician',
     description: 'Precise, polished, and suspiciously confident.',
     primary: 0x252532,
@@ -27,7 +27,7 @@ export const CAT_PROFILES: Record<CatId, CatProfile> = {
   },
   orange: {
     id: 'orange',
-    name: 'Marmalade',
+    name: 'Oyen',
     title: 'Orange Menace',
     description: 'One brain cell. Infinite bumper enthusiasm.',
     primary: 0xf0843c,
@@ -39,7 +39,7 @@ export const CAT_PROFILES: Record<CatId, CatProfile> = {
   },
   tabby: {
     id: 'tabby',
-    name: 'Pepper',
+    name: 'Belang',
     title: 'Tabby Trailblazer',
     description: 'Steady paws make for legendary recoveries.',
     primary: 0x8d8176,
@@ -51,7 +51,7 @@ export const CAT_PROFILES: Record<CatId, CatProfile> = {
   },
   white: {
     id: 'white',
-    name: 'Wisp',
+    name: 'Kapas',
     title: 'Moonbeam Zoomer',
     description: 'Quiet as moonlight until the 3 a.m. zoomies begin.',
     primary: 0xf7f4ea,

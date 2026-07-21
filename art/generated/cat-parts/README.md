@@ -4,11 +4,11 @@ These source sheets produce the character-matched paw flippers and spring tails 
 
 Row order in both sheets:
 
-1. Mika, calico
-2. Domino, tuxedo
-3. Marmalade, orange
-4. Pepper, tabby
-5. Wisp, white
+1. Tompok, calico
+2. Kicap, tuxedo
+3. Oyen, orange
+4. Belang, tabby
+5. Kapas, white
 
 The built-in image-generation workflow used the approved flat-cartoon portraits as character references. The final prompt set requested:
 
