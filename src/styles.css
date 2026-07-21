@@ -398,7 +398,10 @@
 }
 
 @media (max-width:760px) {
-  .game-shell { grid-template-rows:auto auto; padding-bottom:92px; }
+  .game-shell {
+    grid-template-rows:auto auto auto;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
   .game-shell .arcade-hud { width:100%; grid-template-columns:auto 1fr auto; grid-template-areas:"home title actions" "score lives lives"; row-gap:4px; }
   .game-shell .arcade-hud>div:not(.header-actions) { border-right:0; }
   .game-shell .score-stat,.game-shell .lives-stat { border-top:1px solid #62647e38; }
@@ -410,7 +413,15 @@
   .table-column { width:100%; gap:8px; }
   .game-shell .table-wrap { width:min(100%,430px); }
   .launch-guide { display:none; }
-  .game-shell .control-row { display:flex; }
+  .game-shell .control-row {
+    position:static;
+    right:auto;
+    bottom:auto;
+    left:auto;
+    display:flex;
+    width:min(100%,430px);
+    margin-inline:auto;
+  }
   .game-shell .touch-controls { display:grid; }
 }
 
