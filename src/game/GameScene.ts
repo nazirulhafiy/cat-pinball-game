@@ -101,7 +101,7 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     const partKeys = catPartTextureKeys(this.cat.id);
     const partPaths = catPartAssetPaths(this.cat.id);
-    this.load.image('table-background', '/assets/table/background-v1.png');
+    this.load.image('table-background', '/assets/table/background-v2.png');
     this.load.image(partKeys.leftPaw, partPaths.paw);
     this.load.image(partKeys.rightPaw, partPaths.paw);
     this.load.image(partKeys.tail, partPaths.tail);
@@ -272,8 +272,8 @@ export class GameScene extends Phaser.Scene {
     this.add.image(500, 800, 'table-background').setDisplaySize(1000, 1600).setDepth(-10);
 
     this.messageText = this.add.text(500, 286, '', {
-      fontFamily: 'system-ui, sans-serif', fontSize: '24px', fontStyle: '800', color: '#ffcf70',
-      backgroundColor: '#090b1acc', padding: { x: 12, y: 6 },
+      fontFamily: 'ui-monospace, monospace', fontSize: '21px', fontStyle: '700', color: '#ffe29b',
+      backgroundColor: '#090b1ae6', padding: { x: 13, y: 7 },
     }).setOrigin(0.5).setDepth(20);
     this.ballSaveLamp = this.add.circle(500, 1435, 14, 0x62f6a9, 0.2).setStrokeStyle(3, 0x62f6a9, 0.8);
     this.add.text(500, 1466, 'LAND ON YOUR FEET', {

@@ -7,6 +7,8 @@ import './styles.css';
 const HIGH_SCORE_KEY = 'nine-lives-high-score';
 const SELECTED_CAT_KEY = 'nine-lives-selected-cat';
 const MUTED_KEY = 'nine-lives-muted';
+const PLAYER_NAME_KEY = 'nine-lives-player-name';
+const PLAYER_ID_KEY = 'nine-lives-player-id';
 const app = document.querySelector<HTMLElement>('#app') as HTMLElement;
 
 if (!app) throw new Error('The app mount is missing.');
@@ -15,9 +17,10 @@ const storedCat = localStorage.getItem(SELECTED_CAT_KEY) as CatId | null;
 let selectedCat: CatId = storedCat && CAT_IDS.includes(storedCat) ? storedCat : 'calico';
 let highScore = Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
 let muted = localStorage.getItem(MUTED_KEY) === 'true';
+let playerName = localStorage.getItem(PLAYER_NAME_KEY)?.trim() || null;
 let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let controller: GameController | null = null;
-let carouselDirection: -1 | 0 | 1 = 0;
+let launchGuideDismissed = false;
 const titleAudio = new GameAudio();
 titleAudio.setMuted(muted);
 
@@ -38,6 +41,64 @@ function playCatSelectionCue(id: CatId) {
   void titleAudio.unlock().then(() => titleAudio.cue('select', id));
 }
 
+function ensurePlayerId() {
+  const storedPlayerId = localStorage.getItem(PLAYER_ID_KEY);
+  if (storedPlayerId) return storedPlayerId;
+  const playerId = crypto.randomUUID();
+  localStorage.setItem(PLAYER_ID_KEY, playerId);
+  return playerId;
+}
+
+function renderWelcome() {
+  controller?.destroy();
+  controller = null;
+  const editingName = Boolean(playerName);
+  app.innerHTML = `<main class="shell welcome-shell">
+    <header class="welcome-nav">
+      <button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button>
+    </header>
+    <section class="welcome-stage" aria-labelledby="welcome-title">
+      <div class="welcome-story">
+        <h1 id="welcome-title"><span>Nine Lives</span> Midnight Zoomies</h1>
+      </div>
+      <form id="player-form" class="welcome-card" novalidate>
+        <h2>${editingName ? 'Change your name' : 'What should we call you?'}</h2>
+        <label for="player-name-input">Display name</label>
+        <input id="player-name-input" name="playerName" type="text" maxlength="20" autocomplete="nickname" enterkeyhint="go" spellcheck="false" placeholder="Your name" aria-describedby="player-name-help player-name-error" required>
+        <p id="player-name-error" class="field-error" aria-live="polite"></p>
+        <button class="play-button" type="submit">${editingName ? 'Save and continue' : 'Continue'} <span aria-hidden="true">↗</span></button>
+        <p id="player-name-help" class="storage-note">Saved on this device.</p>
+      </form>
+    </section>
+    <div id="live-status" class="sr-only" aria-live="polite"></div>
+  </main>`;
+  const input = el<HTMLInputElement>('#player-name-input');
+  input.value = playerName ?? '';
+  window.requestAnimationFrame(() => input.focus());
+  el<HTMLFormElement>('#player-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const nextName = input.value.replace(/\s+/g, ' ').trim();
+    const error = el('#player-name-error');
+    if (!nextName) {
+      input.setAttribute('aria-invalid', 'true');
+      error.textContent = 'Enter a name to continue.';
+      input.focus();
+      return;
+    }
+    input.removeAttribute('aria-invalid');
+    ensurePlayerId();
+    playerName = nextName;
+    localStorage.setItem(PLAYER_NAME_KEY, playerName);
+    renderTitle();
+    setLive(`Welcome, ${playerName}. Choose your cat.`);
+  });
+  input.addEventListener('input', () => {
+    input.removeAttribute('aria-invalid');
+    el('#player-name-error').textContent = '';
+  });
+  bindMute();
+}
+
 function catCardPortrait(id: CatId) {
   return `<span class="cat-portrait-stack" aria-hidden="true"><img class="cat-portrait-layer cat-portrait-base" src="/assets/cats/${id}/portrait-v1.png" alt="" decoding="async"><img class="cat-portrait-layer cat-portrait-blink" src="/assets/cats/${id}/portrait-blink-v1.png" alt="" decoding="async"></span>`;
 }
@@ -47,31 +108,20 @@ function transformationCatArt(id: CatId) {
 }
 
 function catCards() {
-  const selectedIndex = CAT_IDS.indexOf(selectedCat);
-  return [-2, -1, 0, 1, 2].map((offset) => {
-    const id = CAT_IDS[(selectedIndex + offset + CAT_IDS.length) % CAT_IDS.length];
+  return CAT_IDS.map((id) => {
     const cat = CAT_PROFILES[id];
     const selected = id === selectedCat;
-    const position = selected ? 'active' : offset === -2 ? 'far-left' : offset === -1 ? 'previous' : offset === 1 ? 'next' : 'far-right';
-    const catalogueNumber = String(CAT_IDS.indexOf(id) + 1).padStart(2, '0');
-    return `<div class="cat-slot cat-slot-${position} ${selected ? 'is-active' : ''}">
-      <button class="cat-card cat-card-${position} ${selected ? 'is-selected' : ''}" type="button" data-cat="${id}" aria-pressed="${selected}" aria-label="Select ${cat.name}, ${cat.title}">
-        <span class="cat-card-number" aria-hidden="true">${catalogueNumber}</span>
+    return `<div class="cat-slot ${selected ? 'is-active' : ''}">
+      <button class="cat-card ${selected ? 'is-selected' : ''}" type="button" data-cat="${id}" aria-pressed="${selected}" aria-label="Select ${cat.name}, ${cat.title}">
         <span class="cat-card-art">${catCardPortrait(id)}</span>
         <span class="cat-card-name"><strong>${cat.name}</strong><small>${cat.title}</small></span>
       </button>
-      ${selected ? `<div class="active-cat-actions"><button id="play" class="play-button" type="button">Play as ${cat.name} <span aria-hidden="true">↗</span></button></div>` : ''}
     </div>`;
   }).join('');
 }
 
 function selectCat(id: CatId) {
   if (id === selectedCat) return;
-  const currentIndex = CAT_IDS.indexOf(selectedCat);
-  const targetIndex = CAT_IDS.indexOf(id);
-  const forwardDistance = (targetIndex - currentIndex + CAT_IDS.length) % CAT_IDS.length;
-  const backwardDistance = (currentIndex - targetIndex + CAT_IDS.length) % CAT_IDS.length;
-  carouselDirection = forwardDistance <= backwardDistance ? 1 : -1;
   selectedCat = id;
   localStorage.setItem(SELECTED_CAT_KEY, selectedCat);
   playCatSelectionCue(selectedCat);
@@ -81,7 +131,6 @@ function selectCat(id: CatId) {
 
 function shiftSelectedCat(direction: -1 | 1) {
   const currentIndex = CAT_IDS.indexOf(selectedCat);
-  carouselDirection = direction;
   selectedCat = CAT_IDS[(currentIndex + direction + CAT_IDS.length) % CAT_IDS.length];
   localStorage.setItem(SELECTED_CAT_KEY, selectedCat);
   playCatSelectionCue(selectedCat);
@@ -93,26 +142,25 @@ function renderTitle() {
   controller?.destroy();
   controller = null;
   const cat = CAT_PROFILES[selectedCat];
-  const transitionClass = carouselDirection === 1 ? 'carousel-shift-next' : carouselDirection === -1 ? 'carousel-shift-previous' : '';
-  app.innerHTML = `<main class="shell title-shell ${transitionClass}" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
+  app.innerHTML = `<main class="shell title-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
     <header class="title-nav">
-      <div class="title-wordmark"><span aria-hidden="true">✦</span><strong>Midnight Pinball</strong></div>
-      <div class="title-nav-actions"><button id="how-to-play" class="title-nav-button" type="button">How to play</button><span class="title-best">Best <b>${money(highScore)}</b></span><button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button></div>
+      <span class="title-mark" aria-hidden="true">✦</span>
+      <div class="title-nav-actions"><button id="how-to-play" class="title-nav-button" type="button">How to play</button>${highScore > 0 ? `<span class="title-best">Best <b>${money(highScore)}</b></span>` : ''}<button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button></div>
     </header>
     <section class="title-stage" aria-labelledby="choose-title">
-      <div class="title-intro"><p class="eyebrow">The house is asleep. The cats are not.</p><h1 id="choose-title"><span>Nine Lives</span> Midnight Zoomies</h1><p>Pick your midnight troublemaker and turn the whole house into a pinball table.</p></div>
+      <div class="title-intro"><h1 id="choose-title"><span>Nine Lives</span> Midnight Zoomies</h1><p>Choose your cat.</p></div>
       <div class="cat-showcase">
+        <div class="player-session"><span>Playing as <strong id="player-name"></strong></span><button id="change-player" type="button">Change name</button></div>
         <div class="carousel-frame">
           <button id="previous-cat" class="carousel-arrow previous" type="button" aria-label="Previous cat">←</button>
           <div class="cat-carousel">${catCards()}</div>
           <button id="next-cat" class="carousel-arrow next" type="button" aria-label="Next cat">→</button>
         </div>
-        <p class="cosmetic-choice-note"><b>${CAT_IDS.indexOf(selectedCat) + 1} / ${CAT_IDS.length}</b><span>Same table, same physics. Pick the cat you love.</span></p>
+        <div class="selection-actions"><button id="play" class="play-button" type="button">Play as ${cat.name} <span aria-hidden="true">↗</span></button></div>
       </div>
     </section>
-    <footer class="title-footer"><span>Use <b>←</b> <b>→</b> to choose</span><span>Keyboard and touch friendly</span><span>${CAT_IDS.length} cats. One very awake house.</span></footer>
   </main><div id="live-status" class="sr-only" aria-live="polite"></div>`;
-  carouselDirection = 0;
+  el('#player-name').textContent = playerName ?? '';
   document.querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((button) => button.addEventListener('click', () => {
     selectCat(button.dataset.cat as CatId);
   }));
@@ -121,6 +169,7 @@ function renderTitle() {
   el<HTMLButtonElement>('#next-cat').addEventListener('click', () => shiftSelectedCat(1));
   el<HTMLButtonElement>('#how-to-play').addEventListener('click', showHowToPlay);
   el<HTMLButtonElement>('#play').addEventListener('click', beginTransformation);
+  el<HTMLButtonElement>('#change-player').addEventListener('click', renderWelcome);
   bindMute();
 }
 
@@ -165,10 +214,11 @@ function startGame() {
 
 function renderGame() {
   const cat = CAT_PROFILES[selectedCat];
+  launchGuideDismissed = false;
   app.innerHTML = `<main class="shell game-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
     <header class="game-header"><button id="home" class="word-button" type="button">← Cats</button><div class="game-title"><span>Nine Lives</span><b>Midnight Zoomies</b></div><div class="header-actions"><button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button><button id="pause" class="icon-button" type="button" aria-label="Pause game">Ⅱ</button></div></header>
     <section class="hud" aria-label="Game status"><div><span>Score</span><strong id="score">0</strong></div><div><span>High score</span><strong id="high-score">${money(highScore)}</strong></div><div><span>Lives</span><strong id="lives" aria-label="3 lives">● ● ●</strong></div><div class="hunt"><span>Hunt Meter <b id="hunt-text">0 / 3</b></span><i><b id="hunt-fill"></b></i></div></section>
-    <section class="play-area"><aside class="mode-card"><p id="mode-label">Tonight's hunt</p><strong id="objective">Light the windows</strong><span id="mode-timer">Ready when you are</span></aside><div class="table-column"><div class="table-wrap"><div id="game-mount" tabindex="0" aria-label="Pinball table"></div><div id="save-status" class="save-status">Ball save ready</div></div><div class="key-help" aria-label="Keyboard controls"><span><kbd>A</kbd><kbd>←</kbd> left</span><span><kbd>D</kbd><kbd>→</kbd> right</span><span><kbd>Space</kbd> hold/release</span><span><kbd>P</kbd> pause</span><span><kbd>R</kbd> restart</span></div></div><aside class="combo-card"><p>Combo</p><strong id="combo">×0</strong><span id="objective-status">Ready to launch</span><span id="balls-in-play">0 balls in play</span></aside></section>
+    <section class="play-area"><aside class="mode-card"><p id="mode-label">Tonight's hunt</p><strong id="objective">Light the windows</strong><span id="mode-timer">Ready when you are</span></aside><div class="table-column"><div class="table-wrap"><div id="game-mount" tabindex="0" aria-label="Pinball table"></div><div id="launch-guide" class="launch-guide" role="note"><p>Ready to launch</p><strong>Hold <kbd>Space</kbd> to charge</strong><span>Release to launch</span><small><kbd>A</kbd> / <kbd>←</kbd> left flipper · <kbd>D</kbd> / <kbd>→</kbd> right flipper</small></div><div id="save-status" class="save-status">Ball save ready</div></div></div><aside class="combo-card"><p>Combo</p><strong id="combo">×0</strong><span id="objective-status">Ready to launch</span><span id="balls-in-play">0 balls in play</span></aside><aside class="controls-card key-help" aria-label="Keyboard controls"><p>Controls</p><div class="control-item"><span><kbd>A</kbd><kbd>←</kbd></span><strong>Left flipper</strong></div><div class="control-item"><span><kbd>D</kbd><kbd>→</kbd></span><strong>Right flipper</strong></div><div class="control-item"><span><kbd>Space</kbd></span><strong>Hold and release</strong></div></aside></section>
     <section class="control-row" aria-label="Touch controls"><div class="touch-controls"><button class="touch-button" data-control="left" type="button" aria-label="Left flipper">Left</button><button class="touch-button launch" data-control="launch" type="button" aria-label="Hold and release to launch ball">Launch</button><button class="touch-button" data-control="right" type="button" aria-label="Right flipper">Right</button></div></section>
     <div id="live-status" class="sr-only" aria-live="polite"></div>
   </main>`;
@@ -202,6 +252,13 @@ function updateHud(next: GameSnapshot) {
   el('#save-status').classList.toggle('active', next.ballSaveActive);
   el('#save-status').textContent = next.phase === 'ready' ? 'Ball save starts on launch' : next.ballSaveActive ? 'Ball save active' : 'Ball save used';
   el('#balls-in-play').textContent = `${next.ballsInPlay} ball${next.ballsInPlay === 1 ? '' : 's'} in play`;
+  if (next.phase !== 'ready') launchGuideDismissed = true;
+  const launchGuide = document.querySelector<HTMLElement>('#launch-guide');
+  if (launchGuide) {
+    const showLaunchGuide = next.phase === 'ready' && !launchGuideDismissed;
+    launchGuide.classList.toggle('is-hidden', !showLaunchGuide);
+    launchGuide.setAttribute('aria-hidden', String(!showLaunchGuide));
+  }
 }
 
 function pauseGame() {
@@ -214,6 +271,7 @@ function pauseGame() {
 
 function restartGame() {
   document.querySelector('.overlay')?.remove();
+  launchGuideDismissed = false;
   controller?.restart();
   controller?.resume();
   setLive('New game started.');
@@ -255,4 +313,5 @@ window.addEventListener('keydown', (event) => {
 });
 window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (event) => { reducedMotion = event.matches; });
 document.documentElement.dataset.muted = String(muted);
-renderTitle();
+if (playerName) renderTitle();
+else renderWelcome();
