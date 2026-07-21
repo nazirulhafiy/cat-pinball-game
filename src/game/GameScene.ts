@@ -18,6 +18,9 @@ import {
   launchSpeedForCharge,
   launcherChargeFromHold,
   launcherSpringPose,
+  sampleBallStall,
+  stuckBallRecovery,
+  type BallStallState,
   type FlipperSide,
   type Point,
 } from './tablePhysics';
@@ -78,6 +81,7 @@ export class GameScene extends Phaser.Scene {
   private readonly rules: RulesEngine;
   private readonly audio = new GameAudio();
   private balls: Ball[] = [];
+  private ballStalls = new Map<Ball, BallStallState>();
   private ballSequence = 0;
   private leftFlipper!: Phaser.Physics.Matter.Image;
   private rightFlipper!: Phaser.Physics.Matter.Image;
@@ -153,6 +157,7 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.balls = [];
+    this.ballStalls.clear();
     this.ballSequence = 0;
     this.trails.clear();
     this.leftDown = false;
@@ -221,6 +226,7 @@ export class GameScene extends Phaser.Scene {
         const factor = maxSpeed / speed;
         ball.setVelocity(ball.body.velocity.x * factor, ball.body.velocity.y * factor);
       }
+      this.recoverStuckBall(ball, delta);
     }
   }
 
@@ -870,14 +876,41 @@ export class GameScene extends Phaser.Scene {
     ball.body.label = `ball-${++this.ballSequence}`;
     if (velocity) ball.setVelocity(velocity.x, velocity.y);
     this.balls.push(ball);
+    this.ballStalls.set(ball, { anchor: { x, y }, stationaryMs: 0 });
     this.trails.set(ball, []);
     return ball;
+  }
+
+  private recoverStuckBall(ball: Ball, delta: number): void {
+    const restingOnFlippers = ball.y > 1210 && ball.x < 835;
+    if (!this.launched || ball.body.isStatic || restingOnFlippers) {
+      this.ballStalls.set(ball, { anchor: { x: ball.x, y: ball.y }, stationaryMs: 0 });
+      return;
+    }
+
+    const sample = sampleBallStall(
+      this.ballStalls.get(ball),
+      { x: ball.x, y: ball.y },
+      delta,
+    );
+    this.ballStalls.set(ball, sample.state);
+    if (!sample.stuck) return;
+
+    const recovery = stuckBallRecovery({ x: ball.x, y: ball.y });
+    ball.setPosition(recovery.position.x, recovery.position.y);
+    ball.setVelocity(recovery.velocity.x, recovery.velocity.y);
+    ball.setAngularVelocity(recovery.velocity.x > 0 ? 0.14 : -0.14);
+    this.messageText.setText('CAT NUDGE!');
+    this.time.delayedCall(900, () => {
+      if (this.messageText.text === 'CAT NUDGE!') this.messageText.setText('');
+    });
   }
 
   private handleDrain(ball: Ball): void {
     if (!this.balls.includes(ball)) return;
     const wasLast = this.balls.length === 1;
     this.balls = this.balls.filter((candidate) => candidate !== ball);
+    this.ballStalls.delete(ball);
     this.trails.delete(ball);
     ball.destroy();
     const snapshot = this.dispatch({ type: 'drain', lastBall: wasLast });

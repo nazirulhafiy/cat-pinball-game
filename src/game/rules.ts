@@ -228,7 +228,7 @@ export class RulesEngine {
     const ready = this.state.laserComplete && this.state.zoomiesComplete && !this.roombaDefeated;
     this.state.bossReady = ready;
     if (ready) this.zoomiesQueued = false;
-    if (!ready || this.state.mode !== 'normal' || this.state.ballsInPlay !== 1) return false;
+    if (!ready || this.state.mode !== 'normal' || this.state.ballsInPlay < 1) return false;
     this.state.bossReady = false;
     this.state.mode = 'roomba-rumble';
     this.modeRemaining = ROOMBA_DURATION_MS;

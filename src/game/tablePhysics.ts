@@ -5,6 +5,16 @@ export type Point = {
   y: number;
 };
 
+export type BallStallState = {
+  anchor: Point;
+  stationaryMs: number;
+};
+
+export type BallStallSample = {
+  state: BallStallState;
+  stuck: boolean;
+};
+
 export const BALL_RADIUS = 31;
 export const FLIPPER_LENGTH = 190;
 export const FLIPPER_HALF = FLIPPER_LENGTH / 2;
@@ -18,6 +28,9 @@ export const LAUNCH_CHARGE_MS = 900;
 export const MIN_LAUNCH_CHARGE = 0.28;
 export const MIN_LAUNCH_SPEED = 27;
 export const MAX_LAUNCH_SPEED = 46;
+export const STUCK_BALL_TIMEOUT_MS = 2200;
+
+const STUCK_BALL_MAX_TRAVEL = 16;
 
 export type LauncherSpringPose = {
   offsetX: number;
@@ -92,4 +105,35 @@ export function launchSpeedForCharge(charge: number): number {
   const usableCharge = (clamped - MIN_LAUNCH_CHARGE) / (1 - MIN_LAUNCH_CHARGE);
   const powerCurve = usableCharge * usableCharge;
   return MIN_LAUNCH_SPEED + (MAX_LAUNCH_SPEED - MIN_LAUNCH_SPEED) * powerCurve;
+}
+
+export function sampleBallStall(
+  previous: BallStallState | undefined,
+  position: Point,
+  deltaMs: number,
+): BallStallSample {
+  const moved = previous
+    ? Math.hypot(position.x - previous.anchor.x, position.y - previous.anchor.y)
+    : Number.POSITIVE_INFINITY;
+  if (!previous || moved > STUCK_BALL_MAX_TRAVEL) {
+    return { state: { anchor: { ...position }, stationaryMs: 0 }, stuck: false };
+  }
+
+  const stationaryMs = previous.stationaryMs + clamp(deltaMs, 0, 50);
+  if (stationaryMs < STUCK_BALL_TIMEOUT_MS) {
+    return { state: { anchor: previous.anchor, stationaryMs }, stuck: false };
+  }
+
+  return { state: { anchor: { ...position }, stationaryMs: 0 }, stuck: true };
+}
+
+export function stuckBallRecovery(position: Point): { position: Point; velocity: Point } {
+  const direction = position.x >= 500 ? -1 : 1;
+  const recoveredX = position.x > 835
+    ? 785
+    : clamp(position.x + direction * 28, 95, 905);
+  return {
+    position: { x: recoveredX, y: clamp(position.y - 18, 90, 1490) },
+    velocity: { x: direction * 10, y: -15 },
+  };
 }

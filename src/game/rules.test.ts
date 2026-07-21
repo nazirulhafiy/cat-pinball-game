@@ -75,7 +75,7 @@ describe('RulesEngine', () => {
     expect(engine.snapshot()).toMatchObject({ phase: 'ready', score: 0, lives: 3, mode: 'normal' });
   });
 
-  it('unlocks Roomba Rumble after completing Laser Chase and Zoomies', () => {
+  it('starts Roomba Rumble as soon as Laser Chase and Zoomies are complete', () => {
     const engine = playing();
     completeLaser(engine);
     engine.dispatch({ type: 'box' });
@@ -84,12 +84,8 @@ describe('RulesEngine', () => {
 
     engine.dispatch({ type: 'tick', deltaMs: 25_000 });
     expect(engine.snapshot()).toMatchObject({
-      mode: 'normal', laserComplete: true, zoomiesComplete: true,
-      bossReady: true, ballsInPlay: 3,
-    });
-    engine.dispatch({ type: 'drain', lastBall: false });
-    expect(engine.dispatch({ type: 'drain', lastBall: false })).toMatchObject({
-      mode: 'roomba-rumble', ballsInPlay: 1,
+      mode: 'roomba-rumble', laserComplete: true, zoomiesComplete: true,
+      bossReady: false, ballsInPlay: 3,
     });
     for (let i = 0; i < 5; i++) engine.dispatch({ type: 'roomba-hit' });
     expect(engine.dispatch({ type: 'roomba-hit' })).toMatchObject({ mode: 'normal', roombaHits: 6, bossReady: false });

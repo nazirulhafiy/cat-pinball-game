@@ -6,6 +6,7 @@ import {
   MIN_LAUNCH_CHARGE,
   RIGHT_ACTIVE_ANGLE,
   RIGHT_PIVOT,
+  STUCK_BALL_TIMEOUT_MS,
   centerDrainGap,
   flipperStrikeVelocity,
   flipperTip,
@@ -13,6 +14,8 @@ import {
   launchSpeedForCharge,
   launcherChargeFromHold,
   launcherSpringPose,
+  sampleBallStall,
+  stuckBallRecovery,
 } from './tablePhysics';
 
 describe('pinball table physics', () => {
@@ -56,5 +59,25 @@ describe('pinball table physics', () => {
     expect(wound.scaleX).toBeGreaterThan(1.1);
     expect(trembling.offsetX).not.toBeCloseTo(wound.offsetX);
     expect(trembling.rotation).not.toBeCloseTo(wound.rotation);
+  });
+
+  it('detects a stationary ball and nudges launch-lane traps back into play', () => {
+    let sample = sampleBallStall(undefined, { x: 900, y: 760 }, 50);
+    for (let elapsed = 0; elapsed < STUCK_BALL_TIMEOUT_MS; elapsed += 50) {
+      sample = sampleBallStall(sample.state, { x: 902, y: 761 }, 50);
+    }
+    expect(sample.stuck).toBe(true);
+
+    const recovery = stuckBallRecovery({ x: 902, y: 761 });
+    expect(recovery.position.x).toBeLessThan(835);
+    expect(recovery.velocity.x).toBeLessThan(0);
+    expect(recovery.velocity.y).toBeLessThan(0);
+  });
+
+  it('does not classify a moving ball as stuck', () => {
+    const first = sampleBallStall(undefined, { x: 500, y: 800 }, 50);
+    const moving = sampleBallStall(first.state, { x: 520, y: 790 }, STUCK_BALL_TIMEOUT_MS);
+    expect(moving.stuck).toBe(false);
+    expect(moving.state.stationaryMs).toBe(0);
   });
 });
