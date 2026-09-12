@@ -104,22 +104,23 @@ function renderWelcome() {
   controller?.destroy();
   controller = null;
   app.innerHTML = `<main class="shell welcome-shell">
-    <header class="welcome-nav">
-      <button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button>
+    <header class="land-bar">
+      <button id="mute" class="doodle-btn" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? 'Muted' : 'Sound'}</button>
     </header>
-    <section class="welcome-stage" aria-labelledby="welcome-title">
-      <div class="welcome-story">
-        <h1 id="welcome-title"><span>Cat Balls:</span> Paws of Chaos</h1>
-      </div>
-      <form id="player-form" class="welcome-card" novalidate>
+    <section class="land-stage" aria-labelledby="welcome-title">
+      <h1 id="welcome-title" class="land-mark">CAT BALLS<span class="land-dot" aria-hidden="true"></span></h1>
+      <p class="land-sub">Paws of Chaos</p>
+      <p class="land-lede">Five house cats. Midnight pinball.</p>
+      <form id="player-form" class="land-card" novalidate>
         <h2>What should we call you?</h2>
         <label for="player-name-input">Display name</label>
         <input id="player-name-input" name="playerName" type="text" maxlength="20" autocomplete="nickname" enterkeyhint="go" spellcheck="false" placeholder="Your name" aria-describedby="player-name-help player-name-error" required>
         <p id="player-name-error" class="field-error" aria-live="polite"></p>
-        <button class="play-button" type="submit">Continue <span aria-hidden="true">↗</span></button>
+        <button class="play-button" type="submit">Continue <span aria-hidden="true">→</span></button>
         <p id="player-name-help" class="storage-note">Saved on this device.</p>
       </form>
     </section>
+    <div class="land-ground" aria-hidden="true"></div>
     <div id="live-status" class="sr-only" aria-live="polite"></div>
   </main>`;
   const input = el<HTMLInputElement>('#player-name-input');
@@ -193,22 +194,24 @@ function renderTitle() {
   controller = null;
   const cat = CAT_PROFILES[selectedCat];
   app.innerHTML = `<main class="shell title-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
-    <header class="title-nav">
-      <span class="title-mark" aria-hidden="true">✦</span>
-      <div class="title-nav-actions"><button id="how-to-play" class="title-nav-button" type="button">How to play</button>${titleHighScoreMarkup()}<button id="mute" class="icon-button" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? '♩' : '♫'}</button></div>
+    <header class="land-bar">
+      <button id="how-to-play" class="doodle-btn" type="button">How to play</button>
+      <div class="land-bar-actions">${titleHighScoreMarkup()}<button id="mute" class="doodle-btn" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? 'Muted' : 'Sound'}</button></div>
     </header>
-    <section class="title-stage" aria-labelledby="choose-title">
-      <div class="title-intro"><h1 id="choose-title"><span>Cat Balls:</span> Paws of Chaos</h1><p>Choose your cat.</p></div>
+    <section class="land-stage title-stage" aria-labelledby="choose-title">
+      <h1 id="choose-title" class="land-mark">CAT BALLS<span class="land-dot" aria-hidden="true"></span></h1>
+      <p class="land-sub">Paws of Chaos</p>
+      <p class="land-lede">Choose your cat. Playing as <strong id="player-name"></strong>.</p>
       <div class="cat-showcase">
-        <div class="player-session"><span>Playing as <strong id="player-name"></strong></span></div>
         <div class="carousel-frame">
-          <button id="previous-cat" class="carousel-arrow previous" type="button" aria-label="Previous cat">←</button>
+          <button id="previous-cat" class="doodle-btn carousel-arrow previous" type="button" aria-label="Previous cat">←</button>
           <div class="cat-carousel">${catCards()}</div>
-          <button id="next-cat" class="carousel-arrow next" type="button" aria-label="Next cat">→</button>
+          <button id="next-cat" class="doodle-btn carousel-arrow next" type="button" aria-label="Next cat">→</button>
         </div>
-        <div class="selection-actions"><button id="play" class="play-button" type="button">Play as ${cat.name} <span aria-hidden="true">↗</span></button></div>
+        <div class="selection-actions"><button id="play" class="play-button" type="button">Play as ${cat.name} <span aria-hidden="true">→</span></button></div>
       </div>
     </section>
+    <div class="land-ground" aria-hidden="true"></div>
   </main><div id="live-status" class="sr-only" aria-live="polite"></div>`;
   el('#player-name').textContent = playerName ?? '';
   document.querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((button) => button.addEventListener('click', () => {
@@ -368,7 +371,8 @@ function bindMute() {
     const button = el<HTMLButtonElement>('#mute');
     button.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
     button.setAttribute('aria-pressed', String(muted));
-    button.textContent = muted ? '♩' : '♫';
+    const inGame = Boolean(document.querySelector('.game-shell'));
+    button.textContent = inGame ? (muted ? '♩' : '♫') : (muted ? 'Muted' : 'Sound');
     setLive(muted ? 'Sound muted.' : 'Sound on.');
   });
 }
