@@ -1,4 +1,5 @@
 import { CAT_IDS, CAT_PROFILES } from './game/cats';
+import { asset } from './game/asset';
 import { createGame } from './game/createGame';
 import { GameAudio } from './game/audio';
 import { addLeaderboardEntry, normalizeLeaderboard } from './game/leaderboard';
@@ -49,7 +50,7 @@ const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (character) => (
 const uiAccent = (cat: (typeof CAT_PROFILES)[CatId]) => cat.id === 'tuxedo' || cat.id === 'white' ? cat.cssAccent : cat.cssPrimary;
 const lifeBalls = (cat: CatId, count: number) => Array.from(
   { length: Math.max(0, count) },
-  () => `<img class="life-ball" src="/assets/cats/${cat}/ball-v1.png" alt="" aria-hidden="true">`,
+  () => `<img class="life-ball" src="${asset(`/assets/cats/${cat}/ball-v1.png`)}" alt="" aria-hidden="true">`,
 ).join('');
 const el = <T extends HTMLElement>(selector: string) => {
   const element = document.querySelector<T>(selector);
@@ -148,11 +149,11 @@ function renderWelcome() {
 }
 
 function catCardPortrait(id: CatId) {
-  return `<span class="cat-portrait-stack" aria-hidden="true"><img class="cat-portrait-layer cat-portrait-base" src="/assets/cats/${id}/portrait-v1.png" alt="" decoding="async"><img class="cat-portrait-layer cat-portrait-blink" src="/assets/cats/${id}/portrait-blink-v1.png" alt="" decoding="async"></span>`;
+  return `<span class="cat-portrait-stack" aria-hidden="true"><img class="cat-portrait-layer cat-portrait-base" src="${asset(`/assets/cats/${id}/portrait-v1.png`)}" alt="" decoding="async"><img class="cat-portrait-layer cat-portrait-blink" src="${asset(`/assets/cats/${id}/portrait-blink-v1.png`)}" alt="" decoding="async"></span>`;
 }
 
 function transformationCatArt(id: CatId) {
-  return `<img class="comet-cat-art" src="/assets/cats/${id}/ball-v1.png" alt="" aria-hidden="true">`;
+  return `<img class="comet-cat-art" src="${asset(`/assets/cats/${id}/ball-v1.png`)}" alt="" aria-hidden="true">`;
 }
 
 function catCards() {

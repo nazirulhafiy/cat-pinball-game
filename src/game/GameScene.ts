@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { GameOptions, GameSnapshot, SpecialMode } from './contracts';
 import { CAT_PROFILES, catPartAssetPaths, catPartTextureKeys } from './cats';
+import { asset } from './asset';
 import { GameAudio, type SoundCue } from './audio';
 import { RulesEngine, type GameEvent } from './rules';
 import {
@@ -138,21 +139,21 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     const partKeys = catPartTextureKeys(this.cat.id);
     const partPaths = catPartAssetPaths(this.cat.id);
-    this.load.image('table-background', '/assets/table/background-v2.png');
+    this.load.image('table-background', asset('/assets/table/background-v2.png'));
     this.load.image(partKeys.leftPaw, partPaths.paw);
     this.load.image(partKeys.rightPaw, partPaths.paw);
     this.load.image(partKeys.tail, partPaths.tail);
-    this.load.image('yarn', '/assets/table/objects/yarn-bumper-v1.png');
-    this.load.image('laser-target', '/assets/table/objects/laser-target-v1.png');
-    this.load.image('box', '/assets/table/objects/box-lock-v1.png');
-    this.load.image('vase-zigzag', '/assets/table/objects/vase-zigzag-v1.png');
-    this.load.image('vase-stripes', '/assets/table/objects/vase-stripes-v1.png');
-    this.load.image('vase-scales', '/assets/table/objects/vase-scales-v1.png');
-    this.load.image('guide-rail', '/assets/table/objects/guide-rail-v1.png');
-    this.load.image('kitchen-ramp', '/assets/table/objects/kitchen-ramp-v1.png');
-    this.load.image('mouse', '/assets/table/objects/mouse-v1.png');
-    this.load.image('robot-vacuum', '/assets/table/objects/robot-vacuum-v1.png');
-    this.load.image(`cat-ball-${this.cat.id}`, `/assets/cats/${this.cat.id}/ball-v1.png`);
+    this.load.image('yarn', asset('/assets/table/objects/yarn-bumper-v1.png'));
+    this.load.image('laser-target', asset('/assets/table/objects/laser-target-v1.png'));
+    this.load.image('box', asset('/assets/table/objects/box-lock-v1.png'));
+    this.load.image('vase-zigzag', asset('/assets/table/objects/vase-zigzag-v1.png'));
+    this.load.image('vase-stripes', asset('/assets/table/objects/vase-stripes-v1.png'));
+    this.load.image('vase-scales', asset('/assets/table/objects/vase-scales-v1.png'));
+    this.load.image('guide-rail', asset('/assets/table/objects/guide-rail-v1.png'));
+    this.load.image('kitchen-ramp', asset('/assets/table/objects/kitchen-ramp-v1.png'));
+    this.load.image('mouse', asset('/assets/table/objects/mouse-v1.png'));
+    this.load.image('robot-vacuum', asset('/assets/table/objects/robot-vacuum-v1.png'));
+    this.load.image(`cat-ball-${this.cat.id}`, asset(`/assets/cats/${this.cat.id}/ball-v1.png`));
   }
 
   create(): void {

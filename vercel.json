@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/balls", "destination": "/index.html" },
+    { "source": "/balls/", "destination": "/index.html" },
+    { "source": "/balls/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/balls/favicon.svg", "destination": "/favicon.svg" }
+  ]
+}

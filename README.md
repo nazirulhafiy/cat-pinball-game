@@ -2,6 +2,10 @@
 
 A playful browser pinball game about five house cats causing harmless midnight chaos. Choose Oyen, Tompok, Kicap, Belang, or Kapas, then launch the selected cat-comet into a hand-illustrated house table.
 
+**Play:** [polah.app/balls](https://polah.app/balls/)
+
+The app is built with Vite `base` `/balls/` so Cloudflare/Vercel can proxy that path. The previous origin URL still works: assets load from `/balls/…`.
+
 ## Current playable features
 
 - Five cosmetic cat choices with identical gameplay physics
@@ -26,6 +30,8 @@ A playful browser pinball game about five house cats causing harmless midnight c
 npm install
 npm run dev
 ```
+
+Vite `base` is `/balls/`, so open `http://localhost:5173/balls/`.
 
 Useful checks:
 

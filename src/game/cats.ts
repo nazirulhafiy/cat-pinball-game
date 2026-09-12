@@ -1,4 +1,5 @@
 import type { CatId, CatProfile } from './contracts';
+import { asset } from './asset';
 
 export const CAT_PROFILES: Record<CatId, CatProfile> = {
   calico: {
@@ -75,7 +76,7 @@ export function catPartTextureKeys(cat: CatId) {
 
 export function catPartAssetPaths(cat: CatId) {
   return {
-    paw: `/assets/cats/${cat}/paw-flipper-v4.png`,
-    tail: `/assets/cats/${cat}/tail-launcher-v4.png`,
+    paw: asset(`/assets/cats/${cat}/paw-flipper-v4.png`),
+    tail: asset(`/assets/cats/${cat}/tail-launcher-v4.png`),
   } as const;
 }

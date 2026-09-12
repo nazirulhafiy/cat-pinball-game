@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/',
+  base: '/balls/',
   build: {
     target: 'es2022',
     sourcemap: false,
