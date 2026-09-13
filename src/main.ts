@@ -121,6 +121,7 @@ function renderTitle() {
   controller = null;
   const cat = CAT_PROFILES[selectedCat];
   app.innerHTML = `<main class="shell title-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
+    <div class="land-moon" aria-hidden="true"></div>
     <header class="land-bar">
       <div class="land-bar-actions">${titleHighScoreMarkup()}<button id="mute" class="doodle-btn" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? 'Muted' : 'Sound'}</button></div>
     </header>
