@@ -6364,6 +6364,7 @@ HOLE`,{fontFamily:"system-ui, sans-serif",fontSize:"14px",fontStyle:"800",color:
         <span class="cat-card-name"><strong>${b.name}</strong><small>${b.title}</small></span>
       </button>
     </div>`}).join("")}function Wi(J){J!==yt&&(yt=J,localStorage.setItem(ve,yt),Ge(yt),Jt(),zt(`${Rt[yt].name} selected.`))}function se(J){const b=Ut.indexOf(yt);yt=Ut[(b+J+Ut.length)%Ut.length],localStorage.setItem(ve,yt),Ge(yt),Jt(),zt(`${Rt[yt].name} selected.`)}function Jt(){Pt.stopMusic(),Mt?.destroy(),Mt=null;const J=Rt[yt];Vt.innerHTML=`<main class="shell title-shell" style="--cat-primary:${ce(J)};--cat-secondary:${J.cssSecondary};--cat-accent:${J.cssAccent}">
+    <div class="land-moon" aria-hidden="true"></div>
     <header class="land-bar">
       <div class="land-bar-actions">${Vi()}<button id="mute" class="doodle-btn" type="button" aria-label="${xt?"Unmute sound":"Mute sound"}" aria-pressed="${xt}">${xt?"Muted":"Sound"}</button></div>
     </header>
