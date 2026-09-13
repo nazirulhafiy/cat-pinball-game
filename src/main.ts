@@ -11,7 +11,6 @@ const HIGH_SCORE_KEY = 'nine-lives-high-score';
 const SELECTED_CAT_KEY = 'nine-lives-selected-cat';
 const MUTED_KEY = 'nine-lives-muted';
 const PLAYER_NAME_KEY = 'nine-lives-player-name';
-const PLAYER_ID_KEY = 'nine-lives-player-id';
 const LEADERBOARD_KEY = 'cat-balls-all-time-high-scores';
 const LOAD_SCREEN_MINIMUM_MS = 1100;
 const loadScreenStartedAt = performance.now();
@@ -40,13 +39,6 @@ const MODE_LABELS: Record<SpecialMode, string> = {
 };
 
 const money = (value: number) => value.toLocaleString('en-US');
-const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (character) => ({
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  "'": '&#39;',
-  '"': '&quot;',
-})[character] ?? character);
 const uiAccent = (cat: (typeof CAT_PROFILES)[CatId]) => cat.id === 'tuxedo' || cat.id === 'white' ? cat.cssAccent : cat.cssPrimary;
 const lifeBalls = (cat: CatId, count: number) => Array.from(
   { length: Math.max(0, count) },
@@ -67,14 +59,6 @@ function playCatSelectionCue(id: CatId) {
   void titleAudio.unlock().then(() => titleAudio.cue('select', id));
 }
 
-function ensurePlayerId() {
-  const storedPlayerId = localStorage.getItem(PLAYER_ID_KEY);
-  if (storedPlayerId) return storedPlayerId;
-  const playerId = crypto.randomUUID();
-  localStorage.setItem(PLAYER_ID_KEY, playerId);
-  return playerId;
-}
-
 function loadLeaderboard(): ScoreEntry[] {
   const storedLeaderboard = localStorage.getItem(LEADERBOARD_KEY);
   if (!storedLeaderboard) return [];
@@ -86,67 +70,10 @@ function loadLeaderboard(): ScoreEntry[] {
 }
 
 function titleHighScoreMarkup() {
-  const topScore = leaderboard[0];
-  const topPlayerName = topScore?.playerName ?? playerName;
-  const topScoreValue = topScore?.score ?? highScore;
-  if (!topPlayerName || topScoreValue <= 0) return '';
-  const safePlayerName = escapeHtml(topPlayerName);
+  const topScoreValue = leaderboard[0]?.score ?? highScore;
+  if (topScoreValue <= 0) return '';
   const formattedScore = money(topScoreValue);
-  return `<span class="title-best" aria-label="Best score on this device: ${safePlayerName}, ${formattedScore}"><small>Device best</small><span><b>${safePlayerName}</b><strong>${formattedScore}</strong></span></span>`;
-}
-
-function renderWelcome() {
-  if (playerName) {
-    renderTitle();
-    return;
-  }
-  titleAudio.stopMusic();
-  controller?.destroy();
-  controller = null;
-  app.innerHTML = `<main class="shell welcome-shell">
-    <header class="land-bar">
-      <button id="mute" class="doodle-btn" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? 'Muted' : 'Sound'}</button>
-    </header>
-    <section class="land-stage" aria-labelledby="welcome-title">
-      <h1 id="welcome-title" class="land-mark">CAT BALLS<span class="land-dot" aria-hidden="true"></span></h1>
-      <p class="land-sub">Paws of Chaos</p>
-      <p class="land-lede">Five house cats. Midnight pinball.</p>
-      <form id="player-form" class="land-card" novalidate>
-        <h2>What should we call you?</h2>
-        <label for="player-name-input">Display name</label>
-        <input id="player-name-input" name="playerName" type="text" maxlength="20" autocomplete="nickname" enterkeyhint="go" spellcheck="false" placeholder="Your name" aria-describedby="player-name-help player-name-error" required>
-        <p id="player-name-error" class="field-error" aria-live="polite"></p>
-        <button class="play-button" type="submit">Continue <span aria-hidden="true">→</span></button>
-        <p id="player-name-help" class="storage-note">Saved on this device.</p>
-      </form>
-    </section>
-    <div class="land-ground" aria-hidden="true"></div>
-    <div id="live-status" class="sr-only" aria-live="polite"></div>
-  </main>`;
-  const input = el<HTMLInputElement>('#player-name-input');
-  window.requestAnimationFrame(() => input.focus());
-  el<HTMLFormElement>('#player-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-    const nextName = input.value.replace(/\s+/g, ' ').trim();
-    const error = el('#player-name-error');
-    if (!nextName) {
-      input.setAttribute('aria-invalid', 'true');
-      error.textContent = 'Enter a name to continue.';
-      input.focus();
-      return;
-    }
-    input.removeAttribute('aria-invalid');
-    ensurePlayerId();
-    playerName = nextName;
-    localStorage.setItem(PLAYER_NAME_KEY, playerName);
-    renderTitle();
-    setLive(`Welcome, ${playerName}. Choose your cat.`);
-  });
-  input.addEventListener('input', () => {
-    input.removeAttribute('aria-invalid');
-    el('#player-name-error').textContent = '';
-  });
-  bindMute();
+  return `<span class="title-best" aria-label="High score ${formattedScore}"><small>High score</small><strong>${formattedScore}</strong></span>`;
 }
 
 function catCardPortrait(id: CatId) {
@@ -195,13 +122,12 @@ function renderTitle() {
   const cat = CAT_PROFILES[selectedCat];
   app.innerHTML = `<main class="shell title-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
     <header class="land-bar">
-      <button id="how-to-play" class="doodle-btn" type="button">How to play</button>
       <div class="land-bar-actions">${titleHighScoreMarkup()}<button id="mute" class="doodle-btn" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? 'Muted' : 'Sound'}</button></div>
     </header>
     <section class="land-stage title-stage" aria-labelledby="choose-title">
       <h1 id="choose-title" class="land-mark">CAT BALLS<span class="land-dot" aria-hidden="true"></span></h1>
       <p class="land-sub">Paws of Chaos</p>
-      <p class="land-lede">Choose your cat. Playing as <strong id="player-name"></strong>.</p>
+      <p class="land-lede">Choose your cat.</p>
       <div class="cat-showcase">
         <div class="carousel-frame">
           <button id="previous-cat" class="doodle-btn carousel-arrow previous" type="button" aria-label="Previous cat">←</button>
@@ -213,14 +139,12 @@ function renderTitle() {
     </section>
     <div class="land-ground" aria-hidden="true"></div>
   </main><div id="live-status" class="sr-only" aria-live="polite"></div>`;
-  el('#player-name').textContent = playerName ?? '';
   document.querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((button) => button.addEventListener('click', () => {
     selectCat(button.dataset.cat as CatId);
   }));
   document.querySelectorAll<HTMLImageElement>('.cat-portrait-blink').forEach((image) => image.addEventListener('error', () => image.remove(), { once: true }));
   el<HTMLButtonElement>('#previous-cat').addEventListener('click', () => shiftSelectedCat(-1));
   el<HTMLButtonElement>('#next-cat').addEventListener('click', () => shiftSelectedCat(1));
-  el<HTMLButtonElement>('#how-to-play').addEventListener('click', showHowToPlay);
   el<HTMLButtonElement>('#play').addEventListener('click', beginTransformation);
   bindMute();
 }
@@ -401,8 +325,7 @@ async function startApp() {
   const loader = document.querySelector<HTMLElement>('.site-loader');
   loader?.classList.add('is-complete');
   if (!reducedMotion) await new Promise<void>((resolve) => window.setTimeout(resolve, 260));
-  if (playerName) renderTitle();
-  else renderWelcome();
+  renderTitle();
 }
 
 void startApp();
