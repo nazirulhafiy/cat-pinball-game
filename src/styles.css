@@ -10,7 +10,7 @@
 .hero-cat-art { position:absolute; width:210px; height:250px; left:12%; bottom:7%; object-fit:contain; }
 .comet-cat-art { position:absolute; width:112px; height:112px; object-fit:contain; animation:zoomie 1.1s ease-in both; }
 .transformation.reduced .comet-cat-art { animation-duration:.12s; }
-.title-shell { position:relative; isolation:isolate; overflow:hidden; background:linear-gradient(180deg,#080a1866 0,#10122a2b 38%,#0809169e 100%),url('/balls/assets/concepts/title-world-background-draft-v1.png') center/cover no-repeat; }
+.title-shell { position:relative; isolation:isolate; overflow:hidden; background:linear-gradient(180deg,#080a1866 0,#10122a2b 38%,#0809169e 100%),url('/assets/concepts/title-world-background-draft-v1.png') center/cover no-repeat; }
 .title-shell::before { content:""; position:absolute; z-index:-1; inset:0; pointer-events:none; background:radial-gradient(circle at 23% 48%,transparent 0 22%,#15102f24 47%,transparent 72%),linear-gradient(90deg,#090b1c1f,#090b1c08 45%,#090b1c40); }
 .title-shell .brand,.title-shell .title-stage,.title-shell .title-footer { position:relative; z-index:1; }
 .title-shell .brand h1 { text-shadow:0 3px 18px #050510,0 0 35px #703cc788; }
@@ -104,7 +104,7 @@
   flex-direction:column;
   min-height:100svh;
   padding:clamp(14px,2vw,26px);
-  background:linear-gradient(180deg,#08091614,#08091632 56%,#08091680),url('/balls/assets/concepts/title-world-background-draft-v1.png') center/cover no-repeat;
+  background:linear-gradient(180deg,#08091614,#08091632 56%,#08091680),url('/assets/concepts/title-world-background-draft-v1.png') center/cover no-repeat;
 }
 .welcome-shell::before { content:""; position:absolute; z-index:-1; inset:0; pointer-events:none; background:radial-gradient(ellipse at 64% 43%,#0809160d,transparent 46%),linear-gradient(90deg,#0809162b,transparent 32% 72%,#08091635); }
 .welcome-nav { position:relative; z-index:2; width:min(100%,1180px); min-height:48px; margin:0 auto; display:flex; align-items:center; justify-content:flex-end; }
@@ -132,7 +132,7 @@
   padding:clamp(14px,2vw,26px);
   background:
     linear-gradient(180deg,#08091612 0,#08091620 52%,#08091678 100%),
-    url('/balls/assets/concepts/title-world-background-draft-v1.png') center/cover no-repeat;
+    url('/assets/concepts/title-world-background-draft-v1.png') center/cover no-repeat;
 }
 .title-shell::before {
   background:
@@ -634,7 +634,8 @@ body:has(.title-shell) {
 
 .welcome-shell .play-button,
 .title-shell .play-button,
-.overlay .play-button {
+body:has(.title-shell) .overlay .play-button,
+body:has(.welcome-shell) .overlay .play-button {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -654,13 +655,15 @@ body:has(.title-shell) {
 }
 .welcome-shell .play-button:hover,
 .title-shell .play-button:hover,
-.overlay .play-button:hover {
+body:has(.title-shell) .overlay .play-button:hover,
+body:has(.welcome-shell) .overlay .play-button:hover {
   transform: translate(-1px, -2px);
   box-shadow: 6px 7px 0 #141414;
 }
 .welcome-shell .play-button:active,
 .title-shell .play-button:active,
-.overlay .play-button:active {
+body:has(.title-shell) .overlay .play-button:active,
+body:has(.welcome-shell) .overlay .play-button:active {
   transform: translate(2px, 3px);
   box-shadow: 1px 2px 0 #141414;
 }
@@ -763,10 +766,12 @@ body:has(.title-shell) {
   clip-path: polygon(0 42%, 6% 22%, 12% 38%, 19% 16%, 27% 34%, 35% 12%, 43% 30%, 52% 10%, 60% 28%, 68% 14%, 76% 32%, 84% 18%, 92% 36%, 100% 20%, 100% 100%, 0 100%);
 }
 
-.overlay {
+body:has(.title-shell) .overlay,
+body:has(.welcome-shell) .overlay {
   background: #fff4d8f2;
 }
-.overlay-card {
+body:has(.title-shell) .overlay-card,
+body:has(.welcome-shell) .overlay-card {
   width: min(430px, calc(100vw - 32px));
   padding: 28px;
   text-align: left;
@@ -776,15 +781,19 @@ body:has(.title-shell) {
   background: #fffaf0;
   box-shadow: 4px 5px 0 #141414;
 }
-.overlay-card h2 {
+body:has(.title-shell) .overlay-card h2,
+body:has(.welcome-shell) .overlay-card h2 {
   margin: 0 0 8px;
   font-family: Fredoka, ui-rounded, system-ui, sans-serif;
   font-size: clamp(1.8rem, 4vw, 2.4rem);
   letter-spacing: -0.03em;
 }
-.overlay-card > p:not(.eyebrow) { color: #5a5146; }
-.overlay .eyebrow { color: #5a5146; letter-spacing: 0.08em; }
-.overlay .secondary-button {
+body:has(.title-shell) .overlay-card > p:not(.eyebrow),
+body:has(.welcome-shell) .overlay-card > p:not(.eyebrow) { color: #5a5146; }
+body:has(.title-shell) .overlay .eyebrow,
+body:has(.welcome-shell) .overlay .eyebrow { color: #5a5146; letter-spacing: 0.08em; }
+body:has(.title-shell) .overlay .secondary-button,
+body:has(.welcome-shell) .overlay .secondary-button {
   display: flex;
   justify-content: center;
   width: 100%;
@@ -799,12 +808,6 @@ body:has(.title-shell) {
   font-weight: 600;
   cursor: pointer;
 }
-
-.transformation {
-  background: #fff4d8f5;
-}
-.transformation p { color: #141414; font-family: Fredoka, ui-rounded, system-ui, sans-serif; }
-.transformation button { color: #5a5146; }
 
 @media (max-width: 760px) {
   .title-shell .cat-carousel { grid-template-columns: repeat(2, minmax(0, 1fr)); }

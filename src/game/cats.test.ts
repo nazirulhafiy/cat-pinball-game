@@ -20,8 +20,8 @@ describe('cat cosmetic parts', () => {
         tail: `tail-launcher-${id}`,
       });
       expect(catPartAssetPaths(id)).toEqual({
-        paw: `/balls/assets/cats/${id}/paw-flipper-v4.png`,
-        tail: `/balls/assets/cats/${id}/tail-launcher-v4.png`,
+        paw: `/assets/cats/${id}/paw-flipper-v4.png`,
+        tail: `/assets/cats/${id}/tail-launcher-v4.png`,
       });
     }
   });

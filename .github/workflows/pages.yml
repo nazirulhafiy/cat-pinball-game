@@ -1,8 +1,9 @@
 name: Deploy Pages
 
+# Disabled: polah.app/balls is served from the Vercel origin with vite base `/`.
+# Publishing this build to GitHub Pages under /cat-pinball-game/ breaks asset paths.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
