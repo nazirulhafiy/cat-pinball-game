@@ -702,58 +702,121 @@ body:has(.welcome-shell) .overlay .play-button:active {
   box-shadow: none;
 }
 .title-shell .cat-showcase::before { content: none; }
-.carousel-frame {
+.title-shell .carousel-frame {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
   min-height: 0;
+  height: auto;
 }
 .title-shell .cat-carousel {
+  position: relative;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
+  align-items: stretch;
+}
+.title-shell .cat-slot,
+.title-shell .cat-slot:not(.is-active) {
+  display: grid;
+  min-width: 0;
 }
 .title-shell .cat-card {
-  min-height: 0;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-width: 0;
+  min-height: 176px;
+  height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
-  padding: 12px 8px 14px;
-  overflow: hidden;
+  padding: 14px 8px 12px;
+  overflow: visible;
   border: 3px solid #141414;
   border-radius: 16px;
   color: #141414;
   background: #fffaf0;
   box-shadow: 3px 4px 0 #141414;
+  opacity: 1;
+  transform: none;
+  animation: none;
   backdrop-filter: none;
 }
+.title-shell .cat-card::before { content: none; }
 .title-shell .cat-card:hover,
 .title-shell .cat-card.is-selected {
+  opacity: 1;
   background: #ffe566;
   transform: translate(-1px, -2px);
   box-shadow: 5px 6px 0 #141414;
+  animation: none;
 }
-.cat-card-art { display: grid; place-items: center; }
-.cat-portrait-stack {
+.title-shell .cat-card-art {
   position: relative;
-  width: 72px;
-  height: 72px;
+  inset: auto;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
 }
-.cat-card-name {
+.title-shell .cat-card-art .cat-portrait-stack {
+  position: relative;
+  display: block;
+  width: 96px;
+  height: 96px;
+  max-width: none;
+  filter: none;
+  transform: none;
+  animation: none;
+}
+.title-shell .cat-portrait-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.title-shell .cat-card-name {
+  position: relative;
+  inset: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  z-index: 1;
+  min-height: 0;
   display: grid;
   gap: 2px;
+  padding: 0;
   text-align: center;
+  background: none;
 }
-.cat-card-name strong {
+.title-shell .cat-card-name strong {
   font-family: Fredoka, ui-rounded, system-ui, sans-serif;
   font-size: 1rem;
+  color: #141414;
 }
-.cat-card-name small {
+.title-shell .cat-card-name small,
+.title-shell .cat-card.is-selected .cat-card-name small {
+  display: block;
   color: #5a5146;
   font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.title-shell .cat-card.is-selected .cat-portrait-stack,
+.title-shell .cat-card:hover .cat-portrait-stack,
+.title-shell .cat-card.is-selected:hover .cat-portrait-stack {
+  transform: none;
+  animation: none;
+}
+.title-shell .carousel-arrow {
+  display: none;
 }
 .selection-actions { margin-top: 16px; }
 .selection-actions .play-button { width: min(100%, 420px); margin: 0 auto; display: flex; }
@@ -810,9 +873,17 @@ body:has(.welcome-shell) .overlay .secondary-button {
 }
 
 @media (max-width: 760px) {
-  .title-shell .cat-carousel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .carousel-frame { grid-template-columns: 1fr; }
-  .carousel-arrow { display: none; }
+  .title-shell .cat-carousel {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .title-shell .cat-slot:not(.is-active) { display: grid; }
+  .title-shell .carousel-frame {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .title-shell .carousel-arrow { display: none; }
   .land-ground { margin: 0 -16px; }
 }
 @media (max-width: 420px) {
