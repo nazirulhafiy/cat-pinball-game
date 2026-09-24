@@ -91,6 +91,11 @@ function ballPickers() {
   }).join('');
 }
 
+function chevronGlyph(direction: 'prev' | 'next') {
+  const path = direction === 'prev' ? 'M19.2 7.4 11 16l8.2 8.6' : 'M12.8 7.4 21 16l-8.2 8.6';
+  return `<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="${path}" fill="none" stroke="currentColor" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
 function selectCat(id: CatId) {
   if (id === selectedCat) return;
   selectedCat = id;
@@ -101,11 +106,15 @@ function selectCat(id: CatId) {
 }
 
 function shiftSelectedCat(direction: -1 | 1) {
+  const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement.id : '';
   const currentIndex = CAT_IDS.indexOf(selectedCat);
   selectedCat = CAT_IDS[(currentIndex + direction + CAT_IDS.length) % CAT_IDS.length];
   localStorage.setItem(SELECTED_CAT_KEY, selectedCat);
   playCatSelectionCue(selectedCat);
   renderTitle();
+  if (returnFocus === 'cat-prev' || returnFocus === 'cat-next') {
+    el<HTMLButtonElement>(`#${returnFocus}`).focus();
+  }
   setLive(`${CAT_PROFILES[selectedCat].name} selected.`);
 }
 
@@ -128,7 +137,11 @@ function renderTitle() {
         <p>Paws of Chaos</p>
       </div>
       <p class="start-lede">Midnight house-cat pinball. Pick a cat, smash the bumpers, chase chaos — Polah doodle, not a day-hill clone.</p>
-      <div class="ball-row" role="group" aria-label="Choose your cat">${ballPickers()}</div>
+      <div class="ball-row" role="group" aria-label="Choose your cat">
+        <button id="cat-prev" class="ball-chevron" type="button" aria-label="Previous cat">${chevronGlyph('prev')}</button>
+        ${ballPickers()}
+        <button id="cat-next" class="ball-chevron" type="button" aria-label="Next cat">${chevronGlyph('next')}</button>
+      </div>
       <button id="play" class="start-play" type="button">Play</button>
       <article class="hero-panel">
         <div class="hero-tools">
@@ -150,6 +163,8 @@ function renderTitle() {
   document.querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((button) => button.addEventListener('click', () => {
     selectCat(button.dataset.cat as CatId);
   }));
+  el<HTMLButtonElement>('#cat-prev').addEventListener('click', () => shiftSelectedCat(-1));
+  el<HTMLButtonElement>('#cat-next').addEventListener('click', () => shiftSelectedCat(1));
   el<HTMLButtonElement>('#play').addEventListener('click', beginTransformation);
   bindMute();
 }
@@ -308,8 +323,10 @@ function bindMute() {
 
 window.addEventListener('keydown', (event) => {
   if (!controller && document.querySelector('.start-shell') && !document.querySelector('.overlay')) {
-    if (event.key === 'ArrowLeft') shiftSelectedCat(-1);
-    if (event.key === 'ArrowRight') shiftSelectedCat(1);
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      shiftSelectedCat(event.key === 'ArrowLeft' ? -1 : 1);
+    }
   }
   if (event.key.toLowerCase() === 'p' && controller && !document.querySelector('.overlay')) pauseGame();
   if (event.key.toLowerCase() === 'r' && controller) restartGame();
