@@ -6,6 +6,7 @@ import { addLeaderboardEntry, normalizeLeaderboard } from './game/leaderboard';
 import type { ScoreEntry } from './game/leaderboard';
 import type { CatId, GameController, GameSnapshot, SpecialMode } from './game/contracts';
 import './styles.css';
+import './start.css';
 
 const HIGH_SCORE_KEY = 'nine-lives-high-score';
 const SELECTED_CAT_KEY = 'nine-lives-selected-cat';
@@ -73,27 +74,20 @@ function titleHighScoreMarkup() {
   const topScoreValue = leaderboard[0]?.score ?? highScore;
   if (topScoreValue <= 0) return '';
   const formattedScore = money(topScoreValue);
-  return `<span class="title-best" aria-label="High score ${formattedScore}"><small>High score</small><strong>${formattedScore}</strong></span>`;
-}
-
-function catCardPortrait(id: CatId) {
-  return `<span class="cat-portrait-stack" aria-hidden="true"><img class="cat-portrait-layer cat-portrait-base" src="${asset(`/assets/cats/${id}/portrait-v1.png`)}" alt="" decoding="async"><img class="cat-portrait-layer cat-portrait-blink" src="${asset(`/assets/cats/${id}/portrait-blink-v1.png`)}" alt="" decoding="async"></span>`;
+  return `<span class="start-score" aria-label="High score ${formattedScore}"><small>High score</small><strong>${formattedScore}</strong></span>`;
 }
 
 function transformationCatArt(id: CatId) {
   return `<img class="comet-cat-art" src="${asset(`/assets/cats/${id}/ball-v1.png`)}" alt="" aria-hidden="true">`;
 }
 
-function catCards() {
+function ballPickers() {
   return CAT_IDS.map((id) => {
     const cat = CAT_PROFILES[id];
     const selected = id === selectedCat;
-    return `<div class="cat-slot ${selected ? 'is-active' : ''}">
-      <button class="cat-card ${selected ? 'is-selected' : ''}" type="button" data-cat="${id}" aria-pressed="${selected}" aria-label="Select ${cat.name}, ${cat.title}">
-        <span class="cat-card-art">${catCardPortrait(id)}</span>
-        <span class="cat-card-name"><strong>${cat.name}</strong><small>${cat.title}</small></span>
-      </button>
-    </div>`;
+    return `<button class="ball-pick ${selected ? 'is-selected' : ''}" type="button" data-cat="${id}" aria-pressed="${selected}" aria-label="Select ${cat.name}, ${cat.title}">
+      <img src="${asset(`/assets/cats/${id}/ball-v1.png`)}" alt="" decoding="async">
+    </button>`;
   }).join('');
 }
 
@@ -120,32 +114,42 @@ function renderTitle() {
   controller?.destroy();
   controller = null;
   const cat = CAT_PROFILES[selectedCat];
-  app.innerHTML = `<main class="shell title-shell" style="--cat-primary:${uiAccent(cat)};--cat-secondary:${cat.cssSecondary};--cat-accent:${cat.cssAccent}">
-    <div class="land-moon" aria-hidden="true"></div>
-    <header class="land-bar">
-      <div class="land-bar-actions">${titleHighScoreMarkup()}<button id="mute" class="doodle-btn" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? 'Muted' : 'Sound'}</button></div>
+  app.innerHTML = `<main class="start-shell">
+    <div class="start-sky" aria-hidden="true"></div>
+    <div class="start-moon" aria-hidden="true"></div>
+    <header class="start-bar">
+      ${titleHighScoreMarkup()}
+      <button id="mute" class="start-mute" type="button" aria-label="${muted ? 'Unmute sound' : 'Mute sound'}" aria-pressed="${muted}">${muted ? 'Muted' : 'Sound'}</button>
     </header>
-    <section class="land-stage title-stage" aria-labelledby="choose-title">
-      <h1 id="choose-title" class="land-mark">CAT BALLS<span class="land-dot" aria-hidden="true"></span></h1>
-      <p class="land-sub">Paws of Chaos</p>
-      <p class="land-lede">Choose your cat.</p>
-      <div class="cat-showcase">
-        <div class="carousel-frame">
-          <button id="previous-cat" class="doodle-btn carousel-arrow previous" type="button" aria-label="Previous cat">←</button>
-          <div class="cat-carousel">${catCards()}</div>
-          <button id="next-cat" class="doodle-btn carousel-arrow next" type="button" aria-label="Next cat">→</button>
-        </div>
-        <div class="selection-actions"><button id="play" class="play-button" type="button">Play as ${cat.name} <span aria-hidden="true">→</span></button></div>
+    <section class="start-stage" aria-labelledby="choose-title">
+      <p class="start-kicker">Polah · House Pinball</p>
+      <div class="title-card">
+        <h1 id="choose-title">CAT BALLS.</h1>
+        <p>Paws of Chaos</p>
       </div>
+      <p class="start-lede">Midnight house-cat pinball. Pick a cat, smash the bumpers, chase chaos — Polah doodle, not a day-hill clone.</p>
+      <div class="ball-row" role="group" aria-label="Choose your cat">${ballPickers()}</div>
+      <button id="play" class="start-play" type="button">Play</button>
+      <article class="hero-panel">
+        <div class="hero-tools">
+          <p class="hero-pill">${cat.name} · ${cat.title}</p>
+          <p class="chaos-pill"><span aria-hidden="true">•</span> Chaos mode</p>
+        </div>
+        <img class="hero-sit" src="${asset(`/assets/cats/${selectedCat}/portrait-v1.png`)}" alt="" decoding="async">
+      </article>
     </section>
-    <div class="land-ground" aria-hidden="true"></div>
+    <div class="start-table" aria-hidden="true">
+      <span class="table-rail table-rail-left"></span>
+      <span class="table-rail table-rail-right"></span>
+      <span class="table-bumper table-bumper-gold"></span>
+      <span class="table-bumper table-bumper-pink"></span>
+      <span class="table-flipper table-flipper-left"></span>
+      <span class="table-flipper table-flipper-right"></span>
+    </div>
   </main><div id="live-status" class="sr-only" aria-live="polite"></div>`;
   document.querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((button) => button.addEventListener('click', () => {
     selectCat(button.dataset.cat as CatId);
   }));
-  document.querySelectorAll<HTMLImageElement>('.cat-portrait-blink').forEach((image) => image.addEventListener('error', () => image.remove(), { once: true }));
-  el<HTMLButtonElement>('#previous-cat').addEventListener('click', () => shiftSelectedCat(-1));
-  el<HTMLButtonElement>('#next-cat').addEventListener('click', () => shiftSelectedCat(1));
   el<HTMLButtonElement>('#play').addEventListener('click', beginTransformation);
   bindMute();
 }
@@ -303,7 +307,7 @@ function bindMute() {
 }
 
 window.addEventListener('keydown', (event) => {
-  if (!controller && document.querySelector('.title-shell') && !document.querySelector('.overlay')) {
+  if (!controller && document.querySelector('.start-shell') && !document.querySelector('.overlay')) {
     if (event.key === 'ArrowLeft') shiftSelectedCat(-1);
     if (event.key === 'ArrowRight') shiftSelectedCat(1);
   }
