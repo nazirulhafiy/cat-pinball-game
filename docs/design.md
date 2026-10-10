@@ -68,3 +68,13 @@ Cat choice does not change physics. Scores, mute, and the selected cat stay in `
 Modes, from `src/game/rules.ts`: Mouse Hunt (18s, 3 catches), Laser Chase (20s, 4 hits), Zoomies multiball after 3 box locks (25s), then Roomba Rumble (30s, 6 hits) once Laser Chase and the Zoomies timer are both done and a ball is still in play. A new ball gets a few seconds of ball save. Combos multiply ordinary scores for a short window.
 
 `prefers-reduced-motion` collapses the loader wait, the launch streak, and CSS animation.
+
+## Asset URLs
+
+Vite `base` is `./`. `index.html` uses `%BASE_URL%` for the favicon. `src/game/asset.ts` prefixes every runtime image with `import.meta.env.BASE_URL`, so a path like `/assets/cats/calico/ball-v1.png` becomes `./assets/cats/calico/ball-v1.png`. The built script and stylesheet are relative too. There is no service worker and no web app manifest.
+
+Relative URLs resolve against the page. At `hafiy.my/cat-pinball-game/` they stay under that folder. At `polah.app/balls/` the browser asks for `/balls/assets/…`, and the proxy fetches that file from the Pages folder. The built HTML uses `./assets/…` and `./favicon.svg`. The character before those paths is a dot, so the proxy's root-absolute rewrite does not change the HTML.
+
+The proxy does rewrite JavaScript. A string `"/assets/…"` in the bundle becomes `"/balls/assets/…"`. `asset()` removes a leading slash and a leading `balls/` before adding `./`, so that rewritten argument still becomes `./assets/…` instead of `./balls/assets/…`.
+
+Three background rules in `src/styles.css` (`.title-shell` and `.welcome-shell`, which the current screens do not render) are written as `url('/assets/concepts/title-world-background-draft-v1.png')`. The production build rewrites each one to `url(../assets/concepts/title-world-background-draft-v1.png)`, relative to the stylesheet in `assets/`. From either host that still lands on `…/assets/concepts/title-world-background-draft-v1.png`. The character before `/assets/` is a dot, so the proxy rewrite does not touch it.

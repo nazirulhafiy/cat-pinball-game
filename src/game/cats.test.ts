@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { asset } from './asset';
 import { CAT_IDS, CAT_PROFILES, catPartAssetPaths, catPartTextureKeys } from './cats';
 
 describe('cat cosmetic parts', () => {
@@ -19,10 +20,10 @@ describe('cat cosmetic parts', () => {
         rightPaw: `paw-right-${id}`,
         tail: `tail-launcher-${id}`,
       });
-      expect(catPartAssetPaths(id)).toEqual({
-        paw: `/assets/cats/${id}/paw-flipper-v4.png`,
-        tail: `/assets/cats/${id}/tail-launcher-v4.png`,
-      });
+      const paw = `${import.meta.env.BASE_URL}assets/cats/${id}/paw-flipper-v4.png`;
+      const tail = `${import.meta.env.BASE_URL}assets/cats/${id}/tail-launcher-v4.png`;
+      expect(catPartAssetPaths(id)).toEqual({ paw, tail });
+      expect(asset(`/balls/assets/cats/${id}/paw-flipper-v4.png`)).toBe(paw);
     }
   });
 });

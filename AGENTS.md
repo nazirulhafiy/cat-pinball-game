@@ -4,7 +4,7 @@ Design or behaviour changes (CSS, templates, app JS, build scripts, config) must
 
 The start screen is `src/start.css` and the markup in `renderTitle()` in `src/main.ts`. The pinball shell is `src/styles.css`. Table rules are `src/game/rules.ts`. Phaser draws the table in `src/game/GameScene.ts`.
 
-Vite `base` in `vite.config.ts` is `/`. Local play is `http://localhost:5173/`. Do not describe the base as `/balls/` unless that file changes.
+Vite `base` in `vite.config.ts` is `./`. Local play is `http://localhost:5173/`. Do not set the base to `/` or `/cat-pinball-game/`: the first breaks the Pages subpath, and the second is not rewritten by the polah `/balls/` proxy.
 
 Do not change `vercel.json`, the Vercel project, or the trigger in `.github/workflows/pages.yml` unless asked. Hosting is described in the README. The public game is [polah.app/balls](https://polah.app/balls/), which proxies the GitHub Pages build.
 
