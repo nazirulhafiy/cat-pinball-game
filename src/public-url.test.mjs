@@ -4,16 +4,16 @@ import { describe, expect, it } from 'vitest';
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const script = html.match(/<script>\s*(\(function \(\) \{[\s\S]*?\}\)\(\))\s*<\/script>/)?.[1];
 
-function destination(url: string): string | null {
+function destination(url) {
   if (!script) throw new Error('redirect script missing from index.html');
   const current = new URL(url);
-  let next: string | null = null;
+  let next = null;
   const location = {
     hostname: current.hostname,
     pathname: current.pathname,
     search: current.search,
     hash: current.hash,
-    replace(value: string) {
+    replace(value) {
       next = value;
     },
   };
@@ -43,7 +43,7 @@ describe('public Cat Balls address', () => {
   it('does not loop once the browser host is polah.app', () => {
     const landed = destination('https://hafiy.my/cat-pinball-game/?x=1#house');
     expect(landed).toBe('https://polah.app/balls/?x=1#house');
-    expect(destination(landed!)).toBeNull();
+    expect(destination(landed)).toBeNull();
   });
 
   it('declares the public URL and stays a 200 document', () => {
