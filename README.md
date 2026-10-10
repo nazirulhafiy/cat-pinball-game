@@ -2,9 +2,9 @@
 
 A playful browser pinball game about five house cats causing harmless midnight chaos. Choose Oyen, Tompok, Kicap, Belang, or Kapas, then launch the selected cat-comet into a hand-illustrated house table.
 
-**Play:** [polah.app/balls](https://polah.app/balls/)
+**Play:** [polah.app/balls](https://polah.app/balls/) or [hafiy.my/cat-pinball-game](https://hafiy.my/cat-pinball-game/)
 
-That address proxies the GitHub Pages build. Opening [hafiy.my/cat-pinball-game](https://hafiy.my/cat-pinball-game/) directly does not load the game script: Vite `base` is `/`, so the published HTML requests `/assets/…`, and those root URLs 404 on `hafiy.my`. The files are present under `/cat-pinball-game/assets/…`. See [Deployment](#deployment).
+Vite `base` is `./`. Script, stylesheet, favicon, and game images are relative to the page, so the same `dist/` loads under `/cat-pinball-game/` and under `/balls/`. See [Deployment](#deployment).
 
 ## Current playable features
 
@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-Vite `base` is `/`, so open `http://localhost:5173/`.
+Vite `base` is `./`. The dev server is still at the site root, so open `http://localhost:5173/`.
 
 Useful checks:
 
@@ -73,10 +73,10 @@ See [art/README.md](art/README.md) for the production conventions and source lay
 
 The playable site is the GitHub Pages build.
 
-- **Pages URL:** [hafiy.my/cat-pinball-game](https://hafiy.my/cat-pinball-game/). `nazirulhafiy.github.io/cat-pinball-game` redirects there. Pages serves the `gh-pages` branch.
-- **Workflow:** [`.github/workflows/pages.yml`](.github/workflows/pages.yml) is manual only (`workflow_dispatch`). It does not run on push. The job uses Node 22, runs `npm ci` and `npm run build`, and publishes `dist/` with `peaceiris/actions-gh-pages`.
-- **Last published build checked:** 24 September 2026 (workflow run on `main` at `ceff2b7`). Because `base` is `/`, that HTML's `/assets/…` URLs 404 on the Pages host. The same files return 200 under `/cat-pinball-game/assets/…`.
-- **Public play URL:** [polah.app/balls](https://polah.app/balls/) proxies that Pages build. Its response carries the same `Last-Modified` as the Pages deploy and GitHub's edge headers, and it rewrites asset URLs onto `/balls/…`, which return 200. The proxy configuration is not in this repository. A comment in `pages.yml` still says polah.app is served from Vercel; that comment does not match the live response.
+- **Pages URL:** [hafiy.my/cat-pinball-game](https://hafiy.my/cat-pinball-game/). `nazirulhafiy.github.io/cat-pinball-game` redirects there. Pages serves the `gh-pages` branch. Relative URLs such as `./assets/…` resolve to `/cat-pinball-game/assets/…` on that host.
+- **Workflow:** [`.github/workflows/pages.yml`](.github/workflows/pages.yml) is manual only (`workflow_dispatch`). It does not run on push. The job uses Node 22, runs `npm ci` and `npm run build`, and publishes `dist/` with `peaceiris/actions-gh-pages`. Publishing this base change still takes a manual run. This repo does not start that workflow.
+- **Public play URL:** [polah.app/balls](https://polah.app/balls/) proxies the Pages build. The proxy lives in the polah repo (`server/middleware/balls-proxy.ts`), not here. It fetches `hafiy.my/cat-pinball-game/` plus the path under `/balls/`, and it rewrites only root-absolute `/assets/` and `/favicon.svg` onto `/balls/`, including inside JavaScript. A relative `./assets/…` URL is not rewritten. From a page at `/balls/`, the browser requests `/balls/assets/…`, and the proxy fetches that file from the Pages subpath. `asset()` drops a leading `balls/` so a rewritten `"/balls/assets/…"` string still becomes `./assets/…`. There is no service worker and no web app manifest. A base of `/cat-pinball-game/` would fix Pages and miss this rewrite, so polah would ask its own host for `/cat-pinball-game/assets/…`.
+- The Pages build that was live on 24 September 2026 (`ceff2b7`) still used `base: '/'`, so opening that published HTML directly requested `/assets/…` and those root URLs 404. This change is what makes a later manual publish load at the Pages URL without changing the proxy.
 - **Vercel:** [cat-balls-paws-of-chaos.vercel.app](https://cat-balls-paws-of-chaos.vercel.app/) still responds. It is a different bundle from the 24 September Pages build (different hashed script name). Its `Last-Modified` is 4 October 2026. `/balls/` on that host returns 404. `vercel.json` in this repo rewrites `/balls` onto the root files; this repository does not change the Vercel project or those settings.
 
 High scores stay in each player's browser (`localStorage`). A global leaderboard would require a future backend.
