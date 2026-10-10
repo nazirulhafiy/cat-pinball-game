@@ -69,6 +69,12 @@ Modes, from `src/game/rules.ts`: Mouse Hunt (18s, 3 catches), Laser Chase (20s, 
 
 `prefers-reduced-motion` collapses the loader wait, the launch streak, and CSS animation.
 
+## Public address
+
+`canonical` and `og:url` in `index.html` are `https://polah.app/balls/`.
+
+The same file runs an inline script immediately after the charset tag, before the loader. It returns unless `location.hostname` is `hafiy.my` or `nazirulhafiy.github.io`. On those hosts, `/cat-pinball-game` and `/cat-pinball-game/…` are rewritten so the prefix becomes `/balls`, then `location.replace` goes to `https://polah.app` plus that path, `location.search`, and `location.hash`. A path that is already `/balls` or `/balls/…` on those hosts is sent to the same path on `polah.app`. Every other host stays, including `polah.app`, `localhost`, and `cat-balls-paws-of-chaos.vercel.app`. The document is still HTTP 200: there is no meta refresh and no response status the `/balls/` proxy would follow.
+
 ## Asset URLs
 
 Vite `base` is `./`. `index.html` uses `%BASE_URL%` for the favicon. `src/game/asset.ts` prefixes every runtime image with `import.meta.env.BASE_URL`, so a path like `/assets/cats/calico/ball-v1.png` becomes `./assets/cats/calico/ball-v1.png`. The built script and stylesheet are relative too. There is no service worker and no web app manifest.
