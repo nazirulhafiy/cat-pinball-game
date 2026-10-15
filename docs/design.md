@@ -84,3 +84,9 @@ Relative URLs resolve against the page. At `hafiy.my/cat-pinball-game/` they sta
 The proxy does rewrite JavaScript. A string `"/assets/…"` in the bundle becomes `"/balls/assets/…"`. `asset()` removes a leading slash and a leading `balls/` before adding `./`, so that rewritten argument still becomes `./assets/…` instead of `./balls/assets/…`.
 
 Three background rules in `src/styles.css` (`.title-shell` and `.welcome-shell`, which the current screens do not render) are written as `url('/assets/concepts/title-world-background-draft-v1.png')`. The production build rewrites each one to `url(../assets/concepts/title-world-background-draft-v1.png)`, relative to the stylesheet in `assets/`. From either host that still lands on `…/assets/concepts/title-world-background-draft-v1.png`. The character before `/assets/` is a dot, so the proxy rewrite does not touch it.
+
+## Analytics
+
+- Google Analytics 4: measurement ID `G-B3BZXWWDH9` (the shared polah.app property), tag in `<head>` of `index.html`. Served at polah.app/balls/.
+- Cloudflare Web Analytics: polah.app is proxied by Cloudflare with Web Analytics auto-install enabled, so the beacon is injected at the edge; no snippet in code.
+- No Content-Security-Policy is set; if one is added, allow `www.googletagmanager.com` and `*.google-analytics.com`.
