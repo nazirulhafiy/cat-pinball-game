@@ -87,6 +87,34 @@ Three background rules in `src/styles.css` (`.title-shell` and `.welcome-shell`,
 
 ## Analytics
 
-- Google Analytics 4: measurement ID `G-B3BZXWWDH9` (the shared polah.app property), tag in `<head>` of `index.html`. Served at polah.app/balls/.
-- Cloudflare Web Analytics: polah.app is proxied by Cloudflare with Web Analytics auto-install enabled, so the beacon is injected at the edge; no snippet in code.
-- No Content-Security-Policy is set; if one is added, allow `www.googletagmanager.com` and `*.google-analytics.com`.
+IDs, the internal cookie, and the Cloudflare `spa` flag live in [`data/analytics.json`](../data/analytics.json) (kit shape `version: 1`). [`scripts/analytics-loader.mjs`](../scripts/analytics-loader.mjs) renders **one** inline `<script data-balls-analytics-loader>`. The Vite plugin in [`vite.config.ts`](../vite.config.ts) injects that script into `<head>` during `npm run build`, which is the Pages `dist/` this repo ships. [`scripts/check-analytics-dist.mjs`](../scripts/check-analytics-dist.mjs) fails when a built page has zero loaders, two loaders, a hand-typed gtag or Cloudflare beacon, a GA4 id that is not in the registry, or a cookie name that is not the registry cookie.
+
+| Field | Value |
+| --- | --- |
+| `version` | `1` |
+| `internal_cookie` | `sn_internal` |
+| `spa` | `false` |
+| Primary host | `polah.app` |
+| `aliases` | `["www.polah.app"]` |
+| `ga4_measurement_id` | `G-B3BZXWWDH9` |
+| `cf_beacon_token` | `cd795175569a442ca30e7c08a6295f9f` |
+| `legacy_internal_cookies` | `[]` |
+
+`G-B3BZXWWDH9` is the measurement id this page already shipped (the shared polah.app property). The id did not change. The unconditional gtag tag in `index.html` is gone.
+
+`cd795175569a442ca30e7c08a6295f9f` is polah.app's Cloudflare Web Analytics site token, copied from the polah registry (the same token as the homepage). It is not a sarawak.news or bantuan token. A fetch of `https://polah.app/balls/` on 20 Oct 2026 returned the Pages HTML with the old gtag tag and no `data-cf-beacon`. This change does not turn auto-install on or off. If the zone later appends its own beacon, that copy is outside this repo; `?internal=1` skips only this loader's beacon.
+
+`sn_internal` is the shared internal cookie from that same registry. This game had no internal cookie (the old tag fired on every host). `legacy_internal_cookies` is empty. There is no third cookie name.
+
+`spa` is `false`. The start screen and the table are the same document: `src/main.ts` replaces `#app` and does not change the URL or call `history.pushState`. Cloudflare's SPA flag would treat history changes as extra page views, and this game has none. One document load is one page view.
+
+Loader behaviour:
+
+1. **Production host gate** — runs only when `location.hostname` is `polah.app` or `www.polah.app`. It does not load on `hafiy.my`, `nazirulhafiy.github.io`, localhost, or the Vercel preview host. The origin redirect above still runs first and still appends `location.search` and `location.hash`, so `?internal=1` on hafiy.my arrives on polah.app.
+2. **`?internal=1`** — sets `sn_internal=1` (`path=/`, `max-age=31536000`, `SameSite=Lax`, plus `Secure` on HTTPS). `?internal=0` clears that cookie. While the cookie is `=1`, `gtag('config', 'G-B3BZXWWDH9', { traffic_type: 'internal' })` runs and this loader does not insert the Cloudflare beacon.
+3. **Google Analytics 4** — id from the registry, loaded after the host gate.
+4. **Cloudflare Web Analytics** — beacon token and `spa: false` from the registry, skipped for internal visits.
+
+CI: `node scripts/check-analytics-dist.mjs` runs in `.github/workflows/analytics-dist.yml` on pull requests (build + check, no Pages deploy) and in the `deploy` job of `.github/workflows/pages.yml` after `npm run build`, before `peaceiris/actions-gh-pages` publishes `dist/`. The Pages workflow name is **Deploy Pages**. It stays `workflow_dispatch` only. A human runs that dispatch after merge. This repo does not start it.
+
+No Content-Security-Policy is set; if one is added, allow `www.googletagmanager.com`, `*.google-analytics.com`, and `static.cloudflareinsights.com`.
