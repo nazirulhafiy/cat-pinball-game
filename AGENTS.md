@@ -10,4 +10,6 @@ Do not change `vercel.json`, the Vercel project, or the trigger in `.github/work
 
 Pull requests run the `docs-check` workflow. Watched paths are listed in [docs/ci-docs-check.md](docs/ci-docs-check.md) and at the top of `.github/workflows/docs-check.yml`.
 
+Analytics is one loader from `data/analytics.json`, injected into the built page. It counts only `polah.app` and `www.polah.app`. Open `https://polah.app/balls/?internal=1` for an internal visit (`sn_internal`). Do not run the **Deploy Pages** workflow (`.github/workflows/pages.yml`, `workflow_dispatch`). A human runs that dispatch after merge. Cursor gets 403 on it.
+
 Runtime artwork is under `public/assets`. Production notes are in [art/README.md](art/README.md).

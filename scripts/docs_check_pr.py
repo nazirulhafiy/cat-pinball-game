@@ -15,10 +15,22 @@ from pathlib import Path
 # - src/**/*.ts except src/**/*.test.ts
 # - index.html
 # - vite.config.ts
+# - data/analytics.json
+# - scripts/analytics-registry.mjs
+# - scripts/analytics-loader.mjs
+# - scripts/check-analytics-dist.mjs
+# - scripts/docs_check_pr.py
+# - .github/workflows/analytics-dist.yml
 # Not watched: art/, public/, tests, sprite scripts, vercel.json, pages.yml
 WATCHED_EXACT = (
     "index.html",
     "vite.config.ts",
+    "data/analytics.json",
+    "scripts/analytics-registry.mjs",
+    "scripts/analytics-loader.mjs",
+    "scripts/check-analytics-dist.mjs",
+    "scripts/docs_check_pr.py",
+    ".github/workflows/analytics-dist.yml",
 )
 WATCHED_SUFFIXES_IN_SRC = (
     ".css",

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "internal_cookie": "sn_internal",
+  "spa": false,
+  "hosts": {
+    "polah.app": {
+      "ga4_measurement_id": "G-B3BZXWWDH9",
+      "cf_beacon_token": "cd795175569a442ca30e7c08a6295f9f",
+      "aliases": ["www.polah.app"],
+      "legacy_internal_cookies": []
+    }
+  }
+}

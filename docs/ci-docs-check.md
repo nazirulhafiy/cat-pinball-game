@@ -12,6 +12,12 @@ Same list as the top of the workflow and `scripts/docs_check_pr.py`:
 - `src/**/*.ts`, except `src/**/*.test.ts`
 - `index.html`
 - `vite.config.ts`
+- `data/analytics.json`
+- `scripts/analytics-registry.mjs`
+- `scripts/analytics-loader.mjs`
+- `scripts/check-analytics-dist.mjs`
+- `scripts/docs_check_pr.py`
+- `.github/workflows/analytics-dist.yml`
 
 ## Not watched
 
@@ -21,4 +27,4 @@ Same list as the top of the workflow and `scripts/docs_check_pr.py`:
 - `vercel.json` and `.github/workflows/pages.yml` (deploy settings; do not change them from a docs-only pull request)
 - README, `AGENTS.md`, and files under `docs/`
 
-A change that only touches an unwatched path does not need a docs update. A change to CSS, the app TypeScript, `index.html`, or `vite.config.ts` needs `docs/` in the same pull request, usually `docs/design.md`, unless `no-docs-needed` truly applies.
+A change that only touches an unwatched path does not need a docs update. A change to CSS, the app TypeScript, `index.html`, `vite.config.ts`, the analytics registry, loader, or dist check, `scripts/docs_check_pr.py`, or the `analytics-dist` workflow needs `docs/` in the same pull request, usually `docs/design.md`, unless `no-docs-needed` truly applies.
